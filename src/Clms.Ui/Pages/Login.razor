@@ -1,0 +1,69 @@
+@inject IClmsApi Api
+@inject ClmsAuthStateProvider Auth
+
+<h1>Sign in</h1>
+
+<div class="clms-card clms-login">
+    <EditForm Model="@_model" OnValidSubmit="SubmitAsync" FormName="login">
+        <label>
+            Username
+            <InputText @bind-Value="_model.Username" autocomplete="username" />
+        </label>
+
+        <label>
+            Password
+            <InputText @bind-Value="_model.Password" type="password" autocomplete="current-password" />
+        </label>
+
+        <button type="submit" disabled="@_busy">@(_busy ? "Signing in…" : "Sign in")</button>
+
+        @if (_error is not null)
+        {
+            <p class="clms-error">@_error</p>
+        }
+    </EditForm>
+
+    <p class="clms-hint">
+        Demo accounts (password <code>Passw0rd!</code>):
+        <code>labManager</code>, <code>specimenCollector</code>,
+        <code>labTechnician</code>, <code>cashier</code>
+    </p>
+</div>
+
+@code {
+    private sealed class LoginModel
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+
+    private readonly LoginModel _model = new();
+    private bool _busy;
+    private string? _error;
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var result = await Api.LoginAsync(_model.Username, _model.Password);
+            if (result is null)
+            {
+                _error = "Invalid username or password.";
+                return;
+            }
+
+            await Auth.SignInAsync(result.Token);
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Couldn't reach the API. Is it running on the expected port?";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

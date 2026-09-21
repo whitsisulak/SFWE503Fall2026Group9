@@ -1,0 +1,109 @@
+@page "/inventory"
+@attribute [Authorize]
+@inject IClmsApi Api
+
+<h1>Reagent Inventory</h1>
+
+@if (_items is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <div class="clms-card">
+        <table class="clms-table">
+            <thead>
+                <tr>
+                    <th>Reagent</th>
+                    <th>Lot</th>
+                    <th class="num">On hand</th>
+                    <th class="num">Threshold</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <AuthorizeView Roles="@ClmsRoles.LabManager" Context="mgr">
+                        <Authorized><th>Adjust</th></Authorized>
+                    </AuthorizeView>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr class="@RowClass(item)">
+                        <td>@item.Name</td>
+                        <td class="clms-lot">@item.LotNumber</td>
+                        <td class="num">@item.QuantityOnHand</td>
+                        <td class="num">@item.ReorderThreshold</td>
+                        <td>@item.ExpirationDate.ToShortDateString()</td>
+                        <td>
+                            @if (item.IsExpired)
+                            {
+                                <span class="clms-badge clms-badge-danger">Expired</span>
+                            }
+                            else if (item.IsExpiringSoon)
+                            {
+                                <span class="clms-badge clms-badge-warn">Expiring soon</span>
+                            }
+                            @if (item.IsLowStock)
+                            {
+                                <span class="clms-badge clms-badge-warn">Low stock</span>
+                            }
+                        </td>
+
+                        @* ConOps 6.4.5: only a laboratory manager updates inventory. *@
+                        <AuthorizeView Roles="@ClmsRoles.LabManager" Context="mgr">
+                            <Authorized>
+                                <td class="clms-actions">
+                                    <button @onclick="() => AdjustAsync(item, -1)">−1</button>
+                                    <button @onclick="() => AdjustAsync(item, +1)">+1</button>
+                                </td>
+                            </Authorized>
+                        </AuthorizeView>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (_error is not null)
+    {
+        <p class="clms-error">@_error</p>
+    }
+}
+
+@code {
+    private List<ReagentDto>? _items;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            _items = [.. await Api.GetReagentsAsync()];
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Couldn't reach the API.";
+            _items = [];
+        }
+    }
+
+    private async Task AdjustAsync(ReagentDto reagent, int delta)
+    {
+        var updated = await Api.AdjustStockAsync(reagent.Id, delta, "Manual adjustment from inventory screen");
+
+        if (updated is null)
+        {
+            _error = "Adjustment rejected. (Are you signed in as a laboratory manager?)";
+            return;
+        }
+
+        _error = null;
+        var index = _items!.FindIndex(r => r.Id == updated.Id);
+        if (index >= 0) _items[index] = updated;
+    }
+
+    private static string? RowClass(ReagentDto r) =>
+        r.IsExpired ? "row-danger" : r.IsLowStock || r.IsExpiringSoon ? "row-warn" : null;
+}

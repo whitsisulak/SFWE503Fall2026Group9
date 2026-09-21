@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Clms.Shared</RootNamespace>
+  </PropertyGroup>
+
+</Project>

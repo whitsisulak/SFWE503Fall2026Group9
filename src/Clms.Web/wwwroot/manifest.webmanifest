@@ -1,0 +1,12 @@
+{
+  "name": "Clinical Laboratory Management System",
+  "short_name": "CLMS",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f5c8c",
+  "description": "Clinical Laboratory Management System — SFWE course project.",
+  "icons": []
+}

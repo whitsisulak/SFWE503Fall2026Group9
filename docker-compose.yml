@@ -1,0 +1,49 @@
+# Pin the project name so container, volume, and network names don't change
+# when the checkout folder is renamed (Compose otherwise derives it from the folder).
+name: clms
+
+services:
+
+  db:
+    image: postgres:17-alpine
+    container_name: clms-db
+    environment:
+      POSTGRES_DB: clms
+      POSTGRES_USER: clms
+      POSTGRES_PASSWORD: clms
+    ports:
+      - "5432:5432"
+    volumes:
+      - clms-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # The API waits on this, so it never races the database on first boot.
+      test: ["CMD-SHELL", "pg_isready -U clms -d clms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Clms.Api/Dockerfile
+    container_name: clms-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Clms: "Host=db;Port=5432;Database=clms;Username=clms;Password=clms"
+      InstrumentWatcher__DropPath: "/data/instrument-drop"
+      InstrumentWatcher__PollSeconds: "5"
+      # Blazor WASM dev server origins, so the browser client isn't blocked by CORS.
+      AllowedClientOrigins__0: "http://localhost:5080"
+      AllowedClientOrigins__1: "https://localhost:7080"
+    ports:
+      - "5090:8080"
+    volumes:
+      # Drop instrument .txt files into ./instrument-drop on your Mac and the
+      # worker inside the container picks them up within PollSeconds.
+      - ./instrument-drop:/data/instrument-drop
+
+volumes:
+  clms-pgdata:

@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Personal Claude Code notes and settings (shared notes live in CLAUDE.md)
+CLAUDE.local.md
+.claude/
+
+# Local instrument traffic — keep the folder, not the files
+instrument-drop/*.txt
+instrument-drop/_processed/
+instrument-drop/_failed/
+
+.DS_Store

@@ -1,0 +1,160 @@
+:root {
+    --clms-accent: #0f5c8c;
+    --clms-bg: #f6f7f9;
+    --clms-surface: #ffffff;
+    --clms-border: #d9dee5;
+    --clms-text: #1c2530;
+    --clms-muted: #6a7685;
+    --clms-warn-bg: #fff4e0;
+    --clms-warn-text: #8a5300;
+    --clms-danger-bg: #fdeaea;
+    --clms-danger-text: #9b1c1c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--clms-text);
+    background: var(--clms-bg);
+}
+
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+/* The router's FocusOnNavigate focuses h1 for screen readers; don't draw a ring for it. */
+h1:focus { outline: none; }
+h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+
+.clms-boot { padding: 2rem; color: var(--clms-muted); }
+
+.clms-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: .75rem 1.5rem;
+    background: var(--clms-accent);
+    color: #fff;
+}
+
+.clms-brand { font-weight: 700; letter-spacing: .05em; }
+.clms-spacer { margin-left: auto; }
+.clms-user { font-size: .9rem; opacity: .95; }
+.clms-role {
+    margin-left: .4rem;
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .2);
+    font-size: .8rem;
+}
+
+.clms-nav { display: flex; gap: 1rem; }
+.clms-nav a { color: #dbe9f4; text-decoration: none; white-space: nowrap; }
+.clms-nav a.active { color: #fff; font-weight: 600; text-decoration: underline; }
+
+.clms-linkbtn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, .5);
+    color: #fff;
+    border-radius: 6px;
+    padding: .25rem .6rem;
+    cursor: pointer;
+}
+
+.clms-main { padding: 1.5rem; max-width: 1100px; }
+
+.clms-card {
+    background: var(--clms-surface);
+    border: 1px solid var(--clms-border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.clms-login { max-width: 380px; }
+.clms-login label { display: block; margin-bottom: .85rem; font-size: .9rem; }
+.clms-login input {
+    display: block;
+    width: 100%;
+    margin-top: .3rem;
+    padding: .5rem;
+    border: 1px solid var(--clms-border);
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+button {
+    font: inherit;
+    /* Buttons don't inherit color; iOS WebKit's default is invisible on #fff. */
+    color: var(--clms-text);
+    padding: .45rem .9rem;
+    border: 1px solid var(--clms-border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--clms-accent); }
+button:disabled { opacity: .6; cursor: default; }
+
+.clms-table { width: 100%; border-collapse: collapse; }
+.clms-table th, .clms-table td {
+    text-align: left;
+    padding: .5rem .6rem;
+    border-bottom: 1px solid var(--clms-border);
+}
+.clms-table th { font-size: .8rem; text-transform: uppercase; color: var(--clms-muted); }
+.clms-table .num { text-align: right; }
+.clms-table tr.row-warn { background: var(--clms-warn-bg); }
+.clms-table tr.row-danger { background: var(--clms-danger-bg); }
+
+.clms-badge {
+    display: inline-block;
+    padding: .1rem .5rem;
+    margin-left: .35rem;
+    border-radius: 999px;
+    background: #eef1f5;
+    font-size: .78rem;
+}
+.clms-badge-warn { background: var(--clms-warn-bg); color: var(--clms-warn-text); }
+.clms-badge-danger { background: var(--clms-danger-bg); color: var(--clms-danger-text); }
+
+.clms-alerts { list-style: none; margin: 0; padding: 0; }
+.clms-alerts li { padding: .4rem 0; border-bottom: 1px solid var(--clms-border); }
+.clms-alerts li:last-child { border-bottom: none; }
+
+.clms-order-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+}
+
+.clms-actions { white-space: nowrap; }
+.clms-actions button { padding: .2rem .5rem; margin-right: .25rem; }
+
+.clms-lot { color: var(--clms-muted); font-size: .85rem; margin-left: .4rem; }
+.clms-muted { color: var(--clms-muted); }
+.clms-hint { color: var(--clms-muted); font-size: .88rem; }
+.clms-error { color: var(--clms-danger-text); font-weight: 500; }
+
+/* Phones: brand + user + sign out on the first row, nav on its own row below,
+   and wide tables scroll inside their card instead of pushing the page sideways. */
+@media (max-width: 640px) {
+    .clms-header { flex-wrap: wrap; row-gap: .5rem; }
+    .clms-nav { order: 1; width: 100%; }
+    .clms-card { overflow-x: auto; }
+}
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: .7rem 1.25rem;
+    background: #ffe9a8;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, .2);
+    z-index: 1000;
+}
+#blazor-error-ui .dismiss { cursor: pointer; float: right; }

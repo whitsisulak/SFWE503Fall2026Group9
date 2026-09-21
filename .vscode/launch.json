@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API (needs Postgres running)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Clms.Api/bin/Debug/net10.0/Clms.Api.dll",
+      "cwd": "${workspaceFolder}/src/Clms.Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/scalar/v1"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__Clms": "Host=localhost;Port=5432;Database=clms;Username=clms;Password=clms"
+      }
+    },
+    {
+      "name": "Web (Blazor WASM)",
+      "type": "blazorwasm",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/src/Clms.Web",
+      "url": "http://localhost:5080"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "API + Web",
+      "configurations": ["API (needs Postgres running)", "Web (Blazor WASM)"]
+    }
+  ]
+}

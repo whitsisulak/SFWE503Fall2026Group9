@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/.vs/
+.vscode/
+.git/
+.gitignore
+instrument-drop/
+maui/
+tests/
+*.md

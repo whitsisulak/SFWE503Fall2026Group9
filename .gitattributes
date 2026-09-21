@@ -1,0 +1,6 @@
+# Normalize line endings so Mac and Windows checkouts agree.
+* text=auto
+
+# Shell scripts must stay LF, or bash on Windows (Git Bash/WSL) fails with
+# "$'\r': command not found".
+*.sh text eol=lf

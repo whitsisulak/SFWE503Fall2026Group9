@@ -1,0 +1,110 @@
+@page "/orders"
+@attribute [Authorize]
+@inject IClmsApi Api
+
+<h1>Test Orders</h1>
+
+<p class="clms-hint">
+    Results appear here once the instrument watcher picks up a file whose barcode
+    matches an order. Drop a file into <code>instrument-drop/</code> to see it land.
+</p>
+
+@if (_orders is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    @foreach (var order in _orders)
+    {
+        <div class="clms-card">
+            <div class="clms-order-head">
+                <div>
+                    <strong>@order.TestName</strong>
+                    <span class="clms-lot">barcode @order.Barcode</span>
+                </div>
+                <div>
+                    @order.PatientName &middot; ordered by @order.OrderingPhysician
+                </div>
+                <span class="clms-badge">@order.Status</span>
+
+                @* ConOps 6.3.4: collection is a specimen-collector action. *@
+                <AuthorizeView Roles="@ClmsRoles.SpecimenCollector" Context="collector">
+                    <Authorized>
+                        @if (order.CollectedAtUtc is null)
+                        {
+                            <button @onclick="() => CollectAsync(order)">Mark collected</button>
+                        }
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+
+            @if (order.Results.Count == 0)
+            {
+                <p class="clms-muted">No instrument results yet.</p>
+            }
+            else
+            {
+                <table class="clms-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th><th>Description</th><th>Value</th>
+                            <th>Resulted (UTC)</th><th>Instrument</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var result in order.Results)
+                        {
+                            <tr>
+                                <td><code>@result.TestCode</code></td>
+                                <td>@result.TestDescription</td>
+                                <td><strong>@result.Value</strong></td>
+                                <td>@result.ResultedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="clms-muted">@result.InstrumentId</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+}
+
+@if (_error is not null)
+{
+    <p class="clms-error">@_error</p>
+}
+
+@code {
+    private List<TestOrderDto>? _orders;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            _orders = [.. await Api.GetTestOrdersAsync()];
+        }
+        catch (HttpRequestException)
+        {
+            _error = "Couldn't reach the API.";
+            _orders = [];
+        }
+    }
+
+    private async Task CollectAsync(TestOrderDto order)
+    {
+        var updated = await Api.CollectSampleAsync(order.Barcode);
+        if (updated is null)
+        {
+            _error = "Collection rejected. (Are you signed in as a specimen collector?)";
+            return;
+        }
+
+        _error = null;
+        var index = _orders!.FindIndex(o => o.Id == updated.Id);
+        if (index >= 0) _orders[index] = updated;
+    }
+}

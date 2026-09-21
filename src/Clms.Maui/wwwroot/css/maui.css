@@ -1,0 +1,22 @@
+/* MAUI-only additions. css/app.css is a verbatim copy of Clms.Web's — re-copy it
+   rather than editing it here, and keep native-shell tweaks in this file. */
+
+.status-bar-safe-area { display: none; }
+
+/* iOS: keep content clear of the notch / Dynamic Island and rounded corners. */
+@supports (-webkit-touch-callout: none) {
+    .status-bar-safe-area {
+        display: block;
+        position: sticky;
+        top: 0;
+        height: env(safe-area-inset-top);
+        background: var(--clms-accent);
+        z-index: 1;
+    }
+
+    .clms-header,
+    .clms-main {
+        padding-left: max(1.5rem, env(safe-area-inset-left));
+        padding-right: max(1.5rem, env(safe-area-inset-right));
+    }
+}

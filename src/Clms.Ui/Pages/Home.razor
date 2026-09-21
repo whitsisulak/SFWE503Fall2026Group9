@@ -1,0 +1,60 @@
+@page "/"
+@attribute [Authorize]
+@inject IClmsApi Api
+
+<h1>Dashboard</h1>
+
+@if (_alerts is null)
+{
+    <p>Loading…</p>
+}
+else if (_alerts.Count == 0)
+{
+    <div class="clms-card">
+        <p>No inventory alerts. All reagents are above threshold and in date.</p>
+    </div>
+}
+else
+{
+    <div class="clms-card">
+        <h2>Inventory alerts</h2>
+        <ul class="clms-alerts">
+            @foreach (var r in _alerts)
+            {
+                <li>
+                    <strong>@r.Name</strong> <span class="clms-lot">lot @r.LotNumber</span>
+                    @if (r.IsExpired)
+                    {
+                        <span class="clms-badge clms-badge-danger">Expired @r.ExpirationDate.ToShortDateString()</span>
+                    }
+                    else if (r.IsExpiringSoon)
+                    {
+                        <span class="clms-badge clms-badge-warn">Expires @r.ExpirationDate.ToShortDateString()</span>
+                    }
+                    @if (r.IsLowStock)
+                    {
+                        <span class="clms-badge clms-badge-warn">
+                            Low stock: @r.QuantityOnHand / @r.ReorderThreshold
+                        </span>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ReagentDto>? _alerts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _alerts = await Api.GetInventoryAlertsAsync();
+        }
+        catch (HttpRequestException)
+        {
+            _alerts = [];
+        }
+    }
+}

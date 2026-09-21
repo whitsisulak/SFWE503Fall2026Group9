@@ -1,0 +1,24 @@
+@*
+    Shared router. Both the Blazor WebAssembly host and a MAUI Blazor Hybrid host
+    render this same component as their root — which is what makes the UI portable.
+*@
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Routes).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                @* AuthorizeRouteView already renders this inside DefaultLayout;
+                   wrapping it in another LayoutView nests the header twice. *@
+                <NotAuthorized>
+                    <Login />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <h1>Not found</h1>
+                <p>There's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

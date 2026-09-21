@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/Clms.sln"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "test",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "${workspaceFolder}/Clms.sln"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "db: up",
+      "command": "docker",
+      "type": "process",
+      "args": ["compose", "up", "-d", "db"],
+      "problemMatcher": []
+    },
+    {
+      "label": "stack: up",
+      "command": "docker",
+      "type": "process",
+      "args": ["compose", "up", "--build", "-d"],
+      "problemMatcher": []
+    },
+    {
+      "label": "stack: down",
+      "command": "docker",
+      "type": "process",
+      "args": ["compose", "down"],
+      "problemMatcher": []
+    },
+    {
+      "label": "stack: logs",
+      "command": "docker",
+      "type": "process",
+      "args": ["compose", "logs", "-f", "api"],
+      "problemMatcher": []
+    },
+    {
+      "label": "simulate instrument",
+      "command": "${workspaceFolder}/scripts/simulate-instrument.sh",
+      "windows": {
+        "command": "powershell",
+        "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\simulate-instrument.ps1"]
+      },
+      "type": "shell",
+      "problemMatcher": []
+    }
+  ]
+}

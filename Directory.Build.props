@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Retarget here if your installed SDK is older (e.g. net9.0).
+         Clms.Maui is excluded: it multi-targets via <TargetFrameworks>, and a
+         singular TargetFramework set here would make MSBuild build it as plain net10.0. -->
+    <TargetFramework Condition="'$(MSBuildProjectName)' != 'Clms.Maui'">net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLMS Software Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  /* Palette taken from the CLMS app itself (src/Clms.Web/wwwroot/css/app.css). */
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --sunk: #eef1f5;
+  --ink: #1c2530;
+  --muted: #5f6b79;
+  --rule: #d9dee5;
+  --rule-strong: #aab4c0;
+  --accent: #0f5c8c;
+  --accent-soft: #e3eef6;
+  --on-accent: #ffffff;
+  --ok: #1f6b45;      --ok-bg: #e4f2ea;
+  --warn: #8a5300;    --warn-bg: #fff4e0;
+  --crit: #9b1c1c;    --crit-bg: #fdeaea;
+  --none: #5f6b79;    --none-bg: #eef1f5;
+
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2.25rem; --s-7: 3.5rem;
+  --measure: 44rem;
+  --wide: 66rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0e151b; --surface: #141d25; --sunk: #1a2530;
+    --ink: #e2e9ef; --muted: #97a5b2; --rule: #26333e; --rule-strong: #4a5a68;
+    --accent: #6cb2e0; --accent-soft: #15324a; --on-accent: #0b1620;
+    --ok: #74d19e; --ok-bg: #12301f; --warn: #f0b75c; --warn-bg: #36270f;
+    --crit: #f29090; --crit-bg: #3a1a1c; --none: #97a5b2; --none-bg: #1f2a34;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0e151b; --surface: #141d25; --sunk: #1a2530;
+  --ink: #e2e9ef; --muted: #97a5b2; --rule: #26333e; --rule-strong: #4a5a68;
+  --accent: #6cb2e0; --accent-soft: #15324a; --on-accent: #0b1620;
+  --ok: #74d19e; --ok-bg: #12301f; --warn: #f0b75c; --warn-bg: #36270f;
+  --crit: #f29090; --crit-bg: #3a1a1c; --none: #97a5b2; --none-bg: #1f2a34;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 1rem/1.62 var(--f-body);
+  padding-inline: max(16px, 3vw);
+  padding-block: var(--s-6) var(--s-7);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: .18em; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+code, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--sunk); padding: .05em .35em; border-radius: 3px; }
+strong { font-weight: 600; }
+
+.shell { max-width: 78rem; margin-inline: auto; display: grid; gap: var(--s-6); }
+@media (min-width: 72rem) {
+  .shell { grid-template-columns: 13rem minmax(0, 1fr); align-items: start; }
+}
+
+/* ---------- table of contents ---------- */
+.toc { font-size: .84rem; }
+.toc-label { font: 600 .7rem/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 var(--s-3); }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+.toc a { display: grid; grid-template-columns: 2rem 1fr; padding: .28rem .4rem; color: var(--ink); text-decoration: none; border-radius: 4px; }
+.toc a:hover { background: var(--sunk); }
+.toc a span:first-child { font-family: var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (min-width: 72rem) { .toc { position: sticky; top: var(--s-5); } }
+@media (max-width: 71.99rem) {
+  .toc ol { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); }
+}
+
+main { min-width: 0; display: grid; gap: var(--s-7); }
+
+/* ---------- document header ---------- */
+.doc-head { display: grid; gap: var(--s-5); max-width: var(--wide); }
+.eyebrow { font: 600 .72rem/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 750; font-stretch: 82%; line-height: 1.02; letter-spacing: -.01em; }
+.lede { font-size: 1.14rem; line-height: 1.55; max-width: var(--measure); margin: 0; color: var(--ink); }
+.control {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; overflow: hidden;
+}
+.control div { padding: var(--s-3) var(--s-4); border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 0 -1px -1px 0; }
+.control dt { font: 600 .66rem/1.2 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.control dd { margin: .2rem 0 0; font-size: .92rem; font-weight: 500; }
+
+/* ---------- sections ---------- */
+section { display: grid; gap: var(--s-4); scroll-margin-top: var(--s-5); }
+.sec-head { display: grid; gap: var(--s-2); border-top: 2px solid var(--ink); padding-top: var(--s-3); max-width: var(--wide); }
+.sec-num { font: 600 .74rem/1 var(--f-mono); letter-spacing: .1em; color: var(--muted); }
+h2 { font-size: clamp(1.55rem, 3vw, 2rem); font-weight: 700; font-stretch: 88%; line-height: 1.1; }
+h3 { font-size: 1.12rem; font-weight: 650; font-stretch: 95%; margin-top: var(--s-4); }
+.prose { max-width: var(--measure); display: grid; gap: var(--s-3); }
+.prose p, .prose ul { margin: 0; }
+.prose ul { padding-left: 1.2rem; display: grid; gap: .3rem; }
+
+/* ---------- figures ---------- */
+figure { margin: 0; max-width: var(--wide); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; }
+.fig-scroll { overflow-x: auto; padding: var(--s-4); }
+figure svg { display: block; width: 100%; height: auto; min-width: 40rem; color: var(--ink); }
+figcaption { border-top: 1px solid var(--rule); padding: var(--s-3) var(--s-4); font-size: .88rem; color: var(--muted); }
+figcaption b { font: 600 .72rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); margin-right: .5rem; }
+
+/* diagram vocabulary (styled from the page so both themes resolve) */
+.dg text { font-family: var(--f-body); font-size: 12px; fill: currentColor; }
+.dg .t-title { font-family: var(--f-display); font-weight: 700; font-size: 13.5px; }
+.dg .t-mono { font-family: var(--f-mono); font-size: 11px; }
+.dg .t-muted { fill: var(--muted); }
+.dg .t-accent { fill: var(--accent); }
+.dg .t-cap { font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; fill: var(--muted); }
+.dg .box { fill: var(--surface); stroke: var(--rule-strong); stroke-width: 1.2; }
+.dg .box-soft { fill: var(--sunk); stroke: var(--rule); stroke-width: 1; }
+.dg .box-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+.dg .zone { fill: none; stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 5 4; }
+.dg .ln { fill: none; stroke: currentColor; stroke-width: 1.3; }
+.dg .ln-accent { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.dg .ln-dash { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.dg .ln-life { fill: none; stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 3 4; }
+.dg .ah { fill: currentColor; }
+.dg .ah-accent { fill: var(--accent); }
+.dg .ah-muted { fill: var(--muted); }
+.dg .dot-ok { fill: var(--ok); } .dg .dot-crit { fill: var(--crit); }
+.dg .act { fill: var(--accent); }
+
+/* ---------- tables ---------- */
+.tbl { max-width: var(--wide); overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .8rem; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+th { font: 600 .68rem/1.3 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: var(--sunk); white-space: nowrap; }
+td code { white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+.c { text-align: center; }
+
+.pill { display: inline-block; font: 600 .7rem/1 var(--f-mono); letter-spacing: .04em; padding: .28rem .5rem; border-radius: 999px; white-space: nowrap; }
+.pill-ok { color: var(--ok); background: var(--ok-bg); }
+.pill-warn { color: var(--warn); background: var(--warn-bg); }
+.pill-crit { color: var(--crit); background: var(--crit-bg); }
+.pill-none { color: var(--none); background: var(--none-bg); }
+.verb { font: 600 .72rem/1 var(--f-mono); padding: .2rem .38rem; border-radius: 3px; background: var(--accent-soft); color: var(--accent); }
+.yes { color: var(--ok); font-weight: 600; }
+.no { color: var(--muted); }
+
+/* ---------- instrument message anatomy ---------- */
+.oru { max-width: var(--wide); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: var(--s-5) var(--s-4); display: grid; gap: var(--s-4); overflow-x: auto; }
+.oru-line { display: flex; flex-wrap: nowrap; font: 500 clamp(1rem, 2.4vw, 1.45rem)/1.2 var(--f-mono); gap: 0; min-width: max-content; }
+.seg { display: grid; gap: .45rem; }
+.seg > span:first-child { padding: .35rem .15rem; border-bottom: 3px solid var(--rule-strong); }
+.seg.key > span:first-child { border-color: var(--accent); color: var(--accent); }
+.seg .sep { color: var(--muted); }
+.seg small { font: 500 .68rem/1.25 var(--f-body); color: var(--muted); padding-inline: .15rem; max-width: 9rem; }
+.seg.key small { color: var(--accent); font-weight: 600; }
+
+/* ---------- decisions ---------- */
+.adr { max-width: var(--wide); display: grid; gap: 0; border-top: 1px solid var(--rule); }
+.adr details { border-bottom: 1px solid var(--rule); }
+.adr summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 4.2rem 1fr auto; gap: var(--s-3); align-items: baseline; padding: var(--s-3) var(--s-1); }
+.adr summary::-webkit-details-marker { display: none; }
+.adr summary::after { content: "+"; font-family: var(--f-mono); color: var(--muted); }
+.adr details[open] summary::after { content: "−"; }
+.adr .id { font: 600 .74rem/1 var(--f-mono); color: var(--muted); }
+.adr .q { font-weight: 600; }
+.adr .body { display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); padding: 0 var(--s-1) var(--s-4) calc(4.2rem + var(--s-3) + var(--s-1)); font-size: .92rem; }
+.adr .body p { margin: 0; }
+.adr .body p b { display: block; font: 600 .66rem/1.4 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 40rem) { .adr summary { grid-template-columns: 3.2rem 1fr auto; } .adr .body { padding-left: var(--s-1); } }
+
+.note { max-width: var(--measure); border-left: 3px solid var(--warn); background: var(--warn-bg); padding: var(--s-3) var(--s-4); border-radius: 0 4px 4px 0; font-size: .92rem; }
+.note p { margin: 0; }
+.grid-2 { max-width: var(--wide); display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: var(--s-4); display: grid; gap: var(--s-2); align-content: start; }
+.panel h3 { margin: 0; }
+.panel ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; font-size: .92rem; }
+.states { max-width: var(--wide); list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
+.states li { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: var(--s-3); display: grid; gap: .3rem; align-content: start; }
+.states li.reserved { background: transparent; border-style: dashed; border-color: var(--rule-strong); }
+.states .code { font: 600 .68rem/1 var(--f-mono); letter-spacing: .08em; color: var(--muted); }
+.states b { font-family: var(--f-display); font-size: 1.05rem; font-stretch: 92%; }
+.states .how { font-size: .84rem; color: var(--muted); }
+footer { max-width: var(--wide); border-top: 1px solid var(--rule); padding-top: var(--s-4); font-size: .84rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+<nav class="toc" aria-label="Contents">
+  <p class="toc-label">Contents</p>
+  <ol>
+    <li><a href="#overview"><span>1</span><span>Overview</span></a></li>
+    <li><a href="#structure"><span>2</span><span>System structure</span></a></li>
+    <li><a href="#runtime"><span>3</span><span>Runtime behavior</span></a></li>
+    <li><a href="#data"><span>4</span><span>Data model</span></a></li>
+    <li><a href="#api"><span>5</span><span>API and access control</span></a></li>
+    <li><a href="#deployment"><span>6</span><span>Deployment</span></a></li>
+    <li><a href="#decisions"><span>7</span><span>Design decisions</span></a></li>
+    <li><a href="#security"><span>8</span><span>Security</span></a></li>
+    <li><a href="#quality"><span>9</span><span>Quality attributes</span></a></li>
+    <li><a href="#trace"><span>10</span><span>Requirements traceability</span></a></li>
+    <li><a href="#risks"><span>11</span><span>Risks and technical debt</span></a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="doc-head">
+  <p class="eyebrow">Software architecture description</p>
+  <h1>CLMS Software Architecture</h1>
+  <p class="lede">The Clinical Laboratory Management System tracks a specimen from the test order, through collection and its printed barcode, to the analyzer result that comes back carrying the same barcode. It also manages the reagent stock the lab runs on. This document describes how the current build is put together, why, and where the remaining ConOps requirements will attach.</p>
+  <dl class="control">
+    <div><dt>System</dt><dd>CLMS</dd></div>
+    <div><dt>Course</dt><dd>SFWE 503 · Fall 2026</dd></div>
+    <div><dt>Revision</dt><dd>15 Sep 2026</dd></div>
+    <div><dt>Source</dt><dd class="mono">commit b416097</dd></div>
+    <div><dt>Status</dt><dd>Vertical slice, verified on macOS and Windows</dd></div>
+  </dl>
+</header>
+
+<section id="overview">
+  <div class="sec-head"><span class="sec-num">§ 1</span><h2>Overview</h2></div>
+  <div class="prose">
+    <p>CLMS is a client–server system written entirely in C# on .NET 10. A single HTTP API owns every business rule and all persisted data. The user interface is written once as a component library and hosted two ways: in the browser as an installable web app, and inside native apps for iOS, macOS and Windows.</p>
+    <p>The current build is a <strong>vertical slice</strong>: one path through each architectural layer, built end to end.</p>
+    <ul>
+      <li><strong>Built:</strong> sign-in with role-based access and account lockout, reagent inventory with low-stock and expiry alerts, test orders with barcodes and sample collection, automatic ingestion of analyzer result files, and an audit trail.</li>
+      <li><strong>Not yet built:</strong> billing and point of sale, reporting, patient management screens, purchase orders, the lockout email and the result-validation workflow. §10 maps each ConOps requirement to its status.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="structure">
+  <div class="sec-head"><span class="sec-num">§ 2</span><h2>System structure</h2></div>
+  <div class="prose">
+    <p>Six projects, arranged so that dependencies only point inward toward <code>Clms.Shared</code>. The two client hosts contain almost no code: each one mounts the same <code>Routes</code> component from <code>Clms.Ui</code> and registers the same services.</p>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+    <svg class="dg" viewBox="0 0 1000 640" role="img" aria-label="Component diagram. Clms.Web and Clms.Maui both host the Clms.Ui component library. Clms.Ui calls Clms.Api over HTTP with a bearer token. Clms.Api reads and writes PostgreSQL and polls the instrument-drop folder that lab analyzers write into. Clms.Shared is referenced by both Clms.Ui and Clms.Api.">
+      <defs>
+        <marker id="f1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="f1-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+
+      <text class="t-cap" x="160" y="26">CLIENT HOSTS</text>
+      <rect class="box" x="160" y="36" width="320" height="134" rx="6"/>
+      <text class="t-title" x="180" y="64">Clms.Web</text>
+      <text x="180" y="86">Blazor WebAssembly · installable PWA</text>
+      <text class="t-muted" x="180" y="106">Runs in any modern browser</text>
+      <text class="t-mono t-muted" x="180" y="128">dev server http://localhost:5080</text>
+      <text class="t-muted" x="180" y="150">Service worker caches the app shell only</text>
+
+      <rect class="box" x="520" y="36" width="320" height="134" rx="6"/>
+      <text class="t-title" x="540" y="64">Clms.Maui</text>
+      <text x="540" y="86">.NET MAUI Blazor Hybrid · native shell</text>
+      <text class="t-muted" x="540" y="106">iOS 15+ · macOS (Mac Catalyst) · Windows 10+</text>
+      <text class="t-mono t-muted" x="540" y="128">BlazorWebView renders Clms.Ui</text>
+      <text class="t-muted" x="540" y="150">Build targets chosen by the host OS</text>
+
+      <line class="ln" x1="320" y1="170" x2="320" y2="228" marker-end="url(#f1-ah)"/>
+      <text class="t-muted" x="330" y="204">mounts Routes</text>
+      <line class="ln" x1="680" y1="170" x2="680" y2="228" marker-end="url(#f1-ah)"/>
+      <text class="t-muted" x="690" y="204">mounts Routes</text>
+
+      <rect class="box-accent" x="160" y="232" width="680" height="122" rx="6"/>
+      <text class="t-title" x="180" y="258">Clms.Ui · Razor class library — every screen lives here</text>
+      <text class="t-cap" x="180" y="286">PAGES</text>
+      <text x="180" y="306">Login · Dashboard</text>
+      <text x="180" y="324">Inventory · Test Orders</text>
+      <text class="t-cap" x="400" y="286">API SEAM</text>
+      <text class="t-mono" x="400" y="306">IClmsApi</text>
+      <text class="t-mono t-muted" x="400" y="324">→ HttpClmsApi</text>
+      <text class="t-cap" x="600" y="286">AUTH STATE</text>
+      <text class="t-mono" x="600" y="306">ClmsAuthStateProvider</text>
+      <text x="600" y="324">JWT kept in localStorage</text>
+      <text class="t-muted" x="600" y="342">role claim drives AuthorizeView</text>
+
+      <line class="ln-accent" x1="420" y1="354" x2="420" y2="396" marker-end="url(#f1-aha)"/>
+      <text class="t-accent" x="432" y="380">HTTP · JSON · Authorization: Bearer &lt;JWT&gt;</text>
+
+      <rect class="box" x="160" y="400" width="560" height="180" rx="6"/>
+      <text class="t-title" x="180" y="426">Clms.Api · ASP.NET Core minimal API</text>
+      <text class="t-mono t-muted" x="700" y="426" text-anchor="end">:5090</text>
+      <rect class="box-soft" x="180" y="440" width="164" height="56" rx="4"/>
+      <text x="192" y="463">Auth endpoints</text>
+      <text class="t-mono t-muted" x="192" y="482">/api/auth</text>
+      <rect class="box-soft" x="358" y="440" width="164" height="56" rx="4"/>
+      <text x="370" y="463">Inventory endpoints</text>
+      <text class="t-mono t-muted" x="370" y="482">/api/reagents</text>
+      <rect class="box-soft" x="536" y="440" width="164" height="56" rx="4"/>
+      <text x="548" y="463">Test-order endpoints</text>
+      <text class="t-mono t-muted" x="548" y="482">/api/test-orders</text>
+      <rect class="box-soft" x="180" y="508" width="164" height="56" rx="4"/>
+      <text x="192" y="531">JWT bearer auth</text>
+      <text class="t-muted" x="192" y="550">+ one policy per role</text>
+      <rect class="box-soft" x="358" y="508" width="164" height="56" rx="4"/>
+      <text class="t-mono" x="370" y="531">ClmsDbContext</text>
+      <text class="t-muted" x="370" y="550">EF Core 10 · Npgsql</text>
+      <rect class="box-soft" x="536" y="508" width="164" height="56" rx="4"/>
+      <text class="t-mono" x="548" y="531">InstrumentFileWatcher</text>
+      <text class="t-muted" x="548" y="550">hosted background service</text>
+
+      <rect class="box" x="780" y="430" width="204" height="64" rx="6"/>
+      <text class="t-title" x="798" y="456">PostgreSQL 17</text>
+      <text class="t-mono t-muted" x="798" y="477">Docker · clms-db · :5432</text>
+      <line class="ln" x1="720" y1="462" x2="776" y2="462" marker-end="url(#f1-ah)"/>
+      <text class="t-muted" x="748" y="454" text-anchor="middle" style="font-size:10px">SQL</text>
+
+      <rect class="box" x="780" y="516" width="204" height="64" rx="6"/>
+      <text class="t-title t-mono" x="798" y="542">instrument-drop/</text>
+      <text class="t-mono t-muted" x="798" y="563">→ _processed/ · _failed/</text>
+      <line class="ln" x1="720" y1="548" x2="776" y2="548" marker-end="url(#f1-ah)"/>
+      <text class="t-muted" x="748" y="540" text-anchor="middle" style="font-size:10px">polls 5 s</text>
+
+      <line class="ln-dash" x1="882" y1="616" x2="882" y2="584" marker-end="url(#f1-ah)"/>
+      <text class="t-muted" x="882" y="632" text-anchor="middle">Lab analyzers write *.txt result files</text>
+
+      <rect class="box-soft" x="16" y="232" width="112" height="348" rx="6"/>
+      <text class="t-title" x="72" y="258" text-anchor="middle">Clms.Shared</text>
+      <text class="t-muted" x="72" y="280" text-anchor="middle">DTO records</text>
+      <text class="t-muted" x="72" y="296" text-anchor="middle">+ role names</text>
+      <text class="t-mono" x="72" y="336" text-anchor="middle">LoginRequest</text>
+      <text class="t-mono" x="72" y="354" text-anchor="middle">LoginResponse</text>
+      <text class="t-mono" x="72" y="372" text-anchor="middle">ReagentDto</text>
+      <text class="t-mono" x="72" y="390" text-anchor="middle">TestOrderDto</text>
+      <text class="t-mono" x="72" y="408" text-anchor="middle">TestResultDto</text>
+      <text class="t-mono" x="72" y="426" text-anchor="middle">ClmsRoles</text>
+      <text class="t-muted" x="72" y="556" text-anchor="middle">no dependencies</text>
+      <line class="ln-dash" x1="156" y1="293" x2="132" y2="293" marker-end="url(#f1-ah)"/>
+      <line class="ln-dash" x1="156" y1="490" x2="132" y2="490" marker-end="url(#f1-ah)"/>
+    </svg>
+    </div>
+    <figcaption><b>Fig. 1</b>Components and dependencies. The native app and the web app render identical screens because both host <code>Clms.Ui</code>; only the API talks to the database or reads instrument files. Dashed arrows point from a project to the shared contracts it references.</figcaption>
+  </figure>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Project</th><th>Kind</th><th>Responsibility</th><th>References</th></tr></thead>
+      <tbody>
+        <tr><td><code>Clms.Shared</code></td><td>Class library</td><td>Request/response records and role names. The client and server compile against the same types, so there is no OpenAPI code-generation step.</td><td>—</td></tr>
+        <tr><td><code>Clms.Api</code></td><td>ASP.NET Core web app</td><td>HTTP endpoints, authentication and authorization, business rules, persistence, schema creation and seeding, and the instrument ingestion worker.</td><td>Shared</td></tr>
+        <tr><td><code>Clms.Ui</code></td><td>Razor class library</td><td>Every page, the layout and navigation, the <code>IClmsApi</code> client and client-side auth state. Knows nothing about which host runs it.</td><td>Shared</td></tr>
+        <tr><td><code>Clms.Web</code></td><td>Blazor WebAssembly</td><td>Browser host. Sets the API base URL, registers services and adds the PWA manifest and service worker.</td><td>Ui</td></tr>
+        <tr><td><code>Clms.Maui</code></td><td>.NET MAUI app</td><td>Native host for iOS, Mac Catalyst and Windows. Kept out of <code>Clms.sln</code> so the main solution builds without MAUI workloads; <code>Clms.Mac.sln</code> and <code>Clms.Windows.sln</code> include it.</td><td>Ui</td></tr>
+        <tr><td><code>Clms.Tests</code></td><td>xUnit test project</td><td>18 tests covering the instrument message parser: both ConOps examples, malformed lines, bad timestamps, Windows line endings, mixed files.</td><td>Api</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="runtime">
+  <div class="sec-head"><span class="sec-num">§ 3</span><h2>Runtime behavior</h2></div>
+
+  <h3>3.1 Sign-in and an authorized request</h3>
+  <div class="prose">
+    <p>Authentication is stateless. The API issues a signed JSON Web Token (JWT) carrying the user's name and role. The client stores the token and sends it with every call. The client reads the role only to decide which buttons to show; the API re-checks the role on every request.</p>
+  </div>
+  <figure>
+    <div class="fig-scroll">
+    <svg class="dg" viewBox="0 0 1000 580" role="img" aria-label="Sequence diagram. The login page posts credentials to the API, which loads the user from PostgreSQL, applies lockout rules and returns a signed token. The auth state provider stores the token and sets the bearer header. A later stock adjustment is sent with the token, validated, checked against the LabManager policy and written with an audit entry.">
+      <defs>
+        <marker id="f2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="f2-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="f2-ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-muted" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <rect class="box" x="30" y="14" width="160" height="46" rx="5"/>
+      <text class="t-title" x="110" y="36" text-anchor="middle">Screens</text>
+      <text class="t-mono t-muted" x="110" y="52" text-anchor="middle">Login · Inventory</text>
+      <rect class="box" x="290" y="14" width="180" height="46" rx="5"/>
+      <text class="t-title" x="380" y="36" text-anchor="middle">Auth state</text>
+      <text class="t-mono t-muted" x="380" y="52" text-anchor="middle">ClmsAuthStateProvider</text>
+      <rect class="box" x="570" y="14" width="160" height="46" rx="5"/>
+      <text class="t-title" x="650" y="36" text-anchor="middle">Clms.Api</text>
+      <text class="t-mono t-muted" x="650" y="52" text-anchor="middle">/api/auth · /api/reagents</text>
+      <rect class="box" x="810" y="14" width="160" height="46" rx="5"/>
+      <text class="t-title" x="890" y="36" text-anchor="middle">PostgreSQL</text>
+      <text class="t-mono t-muted" x="890" y="52" text-anchor="middle">Users · Reagents</text>
+      <line class="ln-life" x1="110" y1="60" x2="110" y2="570"/>
+      <line class="ln-life" x1="380" y1="60" x2="380" y2="570"/>
+      <line class="ln-life" x1="650" y1="60" x2="650" y2="570"/>
+      <line class="ln-life" x1="890" y1="60" x2="890" y2="570"/>
+
+      <line class="ln" x1="110" y1="98" x2="646" y2="98" marker-end="url(#f2-ah)"/>
+      <text x="124" y="90">POST /api/auth/login  { username, password }</text>
+      <line class="ln" x1="650" y1="132" x2="886" y2="132" marker-end="url(#f2-ah)"/>
+      <text x="664" y="124">find user by username</text>
+      <line class="ln-dash" x1="890" y1="162" x2="654" y2="162" marker-end="url(#f2-ahm)"/>
+      <text class="t-muted" x="876" y="156" text-anchor="end">hash · failed attempts · locked flag</text>
+
+      <rect class="zone" x="470" y="180" width="510" height="126" rx="4"/>
+      <text class="t-cap" x="480" y="198">ALT</text>
+      <text x="520" y="198"><tspan style="font-weight:600">locked</tspan> → 423 Locked (only a lab manager can unlock)</text>
+      <line class="ln-life" x1="470" y1="214" x2="980" y2="214"/>
+      <text x="520" y="236"><tspan style="font-weight:600">wrong password</tspan> → attempts + 1 → 401</text>
+      <text class="t-muted" x="520" y="254">5th failure sets locked and writes an AccountLockedOut audit entry</text>
+      <line class="ln-life" x1="470" y1="268" x2="980" y2="268"/>
+      <text x="520" y="292"><tspan style="font-weight:600">correct</tspan> → reset attempts, sign JWT (HS256, 480 min, role claim)</text>
+
+      <line class="ln-dash" x1="650" y1="336" x2="114" y2="336" marker-end="url(#f2-ahm)"/>
+      <text class="t-muted" x="636" y="328" text-anchor="end">200  { token, username, role, expiresAtUtc }</text>
+
+      <line class="ln" x1="110" y1="376" x2="376" y2="376" marker-end="url(#f2-ah)"/>
+      <text x="124" y="368">SignInAsync(token)</text>
+      <rect class="act" x="376" y="384" width="8" height="46"/>
+      <text x="396" y="398">localStorage["clms.token"] = token</text>
+      <text x="396" y="416">HttpClient header: Authorization: Bearer …</text>
+      <text class="t-muted" x="396" y="434">role claim shows or hides AuthorizeView content</text>
+
+      <line class="ln-accent" x1="110" y1="474" x2="646" y2="474" marker-end="url(#f2-aha)"/>
+      <text class="t-accent" x="124" y="466">POST /api/reagents/{id}/adjust  { delta, reason }  + Bearer JWT</text>
+      <rect class="act" x="646" y="482" width="8" height="40"/>
+      <text x="666" y="496">verify signature, issuer, audience, expiry</text>
+      <text x="666" y="514">policy LabManager → otherwise 403</text>
+      <line class="ln" x1="650" y1="548" x2="886" y2="548" marker-end="url(#f2-ah)"/>
+      <text x="664" y="540">update stock + AdjustStock audit entry</text>
+    </svg>
+    </div>
+    <figcaption><b>Fig. 2</b>Sign-in, then a role-restricted write. The server never trusts the client's view of the role: hiding a button in <code>Clms.Ui</code> is a usability feature, and the policy check in <code>Clms.Api</code> is the actual control.</figcaption>
+  </figure>
+
+  <h3>3.2 Instrument result ingestion</h3>
+  <div class="prose">
+    <p>Analyzers do not call the API. They write plain-text result files into a shared folder, following the simplified HL7 ORU format defined in ConOps 6.3.5. The barcode printed on the tube at collection comes back as the first field of every line, and that barcode is how a machine result finds its test order.</p>
+  </div>
+
+  <div class="oru" role="img" aria-label="Anatomy of one instrument result line: barcode 1234, message type Test, test ID B123, description T3 Uptake, value 28, timestamp 202208221340.">
+    <p class="eyebrow" style="color:var(--muted)">One line of an analyzer result file</p>
+    <div class="oru-line">
+      <div class="seg key"><span>1234</span><small>Barcode: matches <code>TestOrder.Barcode</code></small></div>
+      <div class="seg"><span class="sep">|</span></div>
+      <div class="seg"><span>Test</span><small>Message type</small></div>
+      <div class="seg"><span class="sep">^</span></div>
+      <div class="seg"><span>B123</span><small>Test ID → <code>TestCode</code></small></div>
+      <div class="seg"><span class="sep">^</span></div>
+      <div class="seg"><span>T3&nbsp;Uptake</span><small>Description</small></div>
+      <div class="seg"><span class="sep">|</span></div>
+      <div class="seg"><span>28</span><small>Value, stored as text (“28” or “Absent”)</small></div>
+      <div class="seg"><span class="sep">|</span></div>
+      <div class="seg"><span>202208221340</span><small><code>yyyyMMddHHmm</code>, read as UTC</small></div>
+    </div>
+  </div>
+
+  <figure>
+    <div class="fig-scroll">
+    <svg class="dg" viewBox="0 0 1000 400" role="img" aria-label="Flow of one result file: the analyzer writes it, the watcher sweeps every five seconds, reads and parses it, matches each line to an order by barcode, skips duplicates, adds results and audit entries, saves once per file, then moves the file to processed if there were no problems or to failed with an error report if there were.">
+      <defs>
+        <marker id="f3-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <rect class="box-soft" x="20" y="40" width="170" height="76" rx="5"/>
+      <text class="t-title" x="34" y="66">Analyzer</text>
+      <text x="34" y="86">writes result file</text>
+      <text class="t-mono t-muted" x="34" y="104">ANALYZER-01_….txt</text>
+      <rect class="box" x="210" y="40" width="170" height="76" rx="5"/>
+      <text class="t-title" x="224" y="66">Sweep</text>
+      <text x="224" y="86">every 5 s, list</text>
+      <text class="t-mono t-muted" x="224" y="104">instrument-drop/*.txt</text>
+      <rect class="box" x="400" y="40" width="170" height="76" rx="5"/>
+      <text class="t-title" x="414" y="66">Read file</text>
+      <text x="414" y="86">whole file as text</text>
+      <text class="t-muted" x="414" y="104">file name → InstrumentId</text>
+      <rect class="box" x="590" y="40" width="170" height="76" rx="5"/>
+      <text class="t-title" x="604" y="66">Parse lines</text>
+      <text x="604" y="86">4 fields, 3 test parts,</text>
+      <text x="604" y="104">valid timestamp</text>
+      <rect class="box" x="780" y="40" width="200" height="76" rx="5"/>
+      <text class="t-title" x="794" y="66">Match order</text>
+      <text x="794" y="86">TestOrder by barcode</text>
+      <text class="t-muted" x="794" y="104">unique index on Barcode</text>
+
+      <line class="ln" x1="190" y1="78" x2="206" y2="78" marker-end="url(#f3-ah)"/>
+      <line class="ln" x1="380" y1="78" x2="396" y2="78" marker-end="url(#f3-ah)"/>
+      <line class="ln" x1="570" y1="78" x2="586" y2="78" marker-end="url(#f3-ah)"/>
+      <line class="ln" x1="760" y1="78" x2="776" y2="78" marker-end="url(#f3-ah)"/>
+
+      <text class="t-muted" x="414" y="138">still being written →</text>
+      <text class="t-muted" x="414" y="154">retry on next sweep</text>
+      <text class="t-muted" x="604" y="138">bad line → problem,</text>
+      <text class="t-muted" x="604" y="154">good lines continue</text>
+      <text class="t-muted" x="794" y="138">unknown barcode →</text>
+      <text class="t-muted" x="794" y="154">problem</text>
+
+      <line class="ln" x1="880" y1="164" x2="880" y2="216" marker-end="url(#f3-ah)"/>
+
+      <rect class="box" x="780" y="220" width="200" height="76" rx="5"/>
+      <text class="t-title" x="794" y="246">Skip duplicates</text>
+      <text x="794" y="266">same TestCode and</text>
+      <text x="794" y="284">timestamp already stored</text>
+      <rect class="box-accent" x="570" y="220" width="190" height="76" rx="5"/>
+      <text class="t-title" x="584" y="246">Record result</text>
+      <text x="584" y="266">add TestResult, status</text>
+      <text x="584" y="284">→ Resulted, audit entry</text>
+      <rect class="box" x="400" y="220" width="150" height="76" rx="5"/>
+      <text class="t-title" x="414" y="246">Save</text>
+      <text x="414" y="266">one SaveChanges</text>
+      <text x="414" y="284">per file</text>
+      <rect class="box" x="210" y="220" width="170" height="76" rx="5"/>
+      <text class="t-title" x="224" y="246">Any problems?</text>
+      <text x="224" y="266">parse failures or</text>
+      <text x="224" y="284">unmatched barcodes</text>
+
+      <line class="ln" x1="780" y1="258" x2="764" y2="258" marker-end="url(#f3-ah)"/>
+      <line class="ln" x1="570" y1="258" x2="554" y2="258" marker-end="url(#f3-ah)"/>
+      <line class="ln" x1="400" y1="258" x2="384" y2="258" marker-end="url(#f3-ah)"/>
+
+      <rect class="box" x="20" y="196" width="160" height="50" rx="5"/>
+      <circle class="dot-ok" cx="36" cy="221" r="5"/>
+      <text class="t-mono" x="48" y="225">_processed/</text>
+      <rect class="box" x="20" y="272" width="160" height="62" rx="5"/>
+      <circle class="dot-crit" cx="36" cy="292" r="5"/>
+      <text class="t-mono" x="48" y="296">_failed/</text>
+      <text class="t-muted" x="48" y="318">+ .error.txt per line</text>
+      <path class="ln" d="M210,244 L196,232 L184,226" marker-end="url(#f3-ah)"/>
+      <text class="t-muted" x="198" y="212" text-anchor="middle">none</text>
+      <path class="ln" d="M210,272 L196,290 L184,298" marker-end="url(#f3-ah)"/>
+      <text class="t-muted" x="198" y="316" text-anchor="middle">1+</text>
+
+      <text class="t-muted" x="20" y="378">Files are moved, never deleted. Good lines in a failed file are still saved. An exception during a sweep is logged and the next sweep runs normally.</text>
+    </svg>
+    </div>
+    <figcaption><b>Fig. 3</b>One result file through <code>InstrumentFileWatcher</code>. The parser is a pure function, which is why it carries the unit tests; the watcher handles file I/O, matching and persistence around it.</figcaption>
+  </figure>
+</section>
+
+<section id="data">
+  <div class="sec-head"><span class="sec-num">§ 4</span><h2>Data model</h2></div>
+  <div class="prose">
+    <p>Six tables in PostgreSQL, mapped by Entity Framework Core from <code>Clms.Api/Domain/Entities.cs</code>. Every primary key is a GUID generated by the application before the row is saved, so an audit entry can reference a new order's ID in the same transaction that creates it.</p>
+  </div>
+  <figure>
+    <div class="fig-scroll">
+    <svg class="dg" viewBox="0 0 1000 470" role="img" aria-label="Entity diagram. A Patient has many TestOrders, with deletes restricted. A TestOrder has many TestResults, with deletes cascading. AppUser, Reagent and AuditEntry stand alone; AuditEntry refers to any row by entity name and ID.">
+      <g>
+        <rect class="box" x="20" y="40" width="230" height="132" rx="5"/>
+        <rect class="box-soft" x="20.6" y="40.6" width="228.8" height="28" rx="4.5"/>
+        <text class="t-title" x="34" y="60">Patient</text>
+        <text class="t-mono" x="34" y="90">Id</text><text class="t-mono t-muted" x="236" y="90" text-anchor="end">PK</text>
+        <text class="t-mono" x="34" y="108">FullName</text>
+        <text class="t-mono" x="34" y="126">DateOfBirth</text><text class="t-mono t-muted" x="236" y="126" text-anchor="end">date</text>
+        <text class="t-mono" x="34" y="144">InsuranceProvider</text><text class="t-mono t-muted" x="236" y="144" text-anchor="end">null</text>
+        <text class="t-mono" x="34" y="162">InsurancePolicyNumber</text><text class="t-mono t-muted" x="236" y="162" text-anchor="end">null</text>
+      </g>
+      <g>
+        <rect class="box-accent" x="340" y="40" width="260" height="186" rx="5"/>
+        <text class="t-title" x="354" y="60">TestOrder</text>
+        <line class="ln-life" x1="340" y1="69" x2="600" y2="69"/>
+        <text class="t-mono" x="354" y="90">Id</text><text class="t-mono t-muted" x="586" y="90" text-anchor="end">PK</text>
+        <text class="t-mono t-accent" x="354" y="108">Barcode</text><text class="t-mono t-accent" x="586" y="108" text-anchor="end">unique</text>
+        <text class="t-mono" x="354" y="126">PatientId</text><text class="t-mono t-muted" x="586" y="126" text-anchor="end">FK</text>
+        <text class="t-mono" x="354" y="144">OrderingPhysician</text>
+        <text class="t-mono" x="354" y="162">TestName</text>
+        <text class="t-mono" x="354" y="180">Status</text><text class="t-mono t-muted" x="586" y="180" text-anchor="end">enum</text>
+        <text class="t-mono" x="354" y="198">OrderedAtUtc</text>
+        <text class="t-mono" x="354" y="216">CollectedAtUtc</text><text class="t-mono t-muted" x="586" y="216" text-anchor="end">null</text>
+      </g>
+      <g>
+        <rect class="box" x="690" y="40" width="290" height="168" rx="5"/>
+        <rect class="box-soft" x="690.6" y="40.6" width="288.8" height="28" rx="4.5"/>
+        <text class="t-title" x="704" y="60">TestResult</text>
+        <text class="t-mono" x="704" y="90">Id</text><text class="t-mono t-muted" x="966" y="90" text-anchor="end">PK</text>
+        <text class="t-mono" x="704" y="108">TestOrderId</text><text class="t-mono t-muted" x="966" y="108" text-anchor="end">FK</text>
+        <text class="t-mono" x="704" y="126">TestCode</text><text class="t-mono t-muted" x="966" y="126" text-anchor="end">e.g. B123</text>
+        <text class="t-mono" x="704" y="144">TestDescription</text>
+        <text class="t-mono" x="704" y="162">Value</text><text class="t-mono t-muted" x="966" y="162" text-anchor="end">text</text>
+        <text class="t-mono" x="704" y="180">ResultedAtUtc</text>
+        <text class="t-mono" x="704" y="198">InstrumentId</text><text class="t-mono t-muted" x="966" y="198" text-anchor="end">file name</text>
+      </g>
+      <line class="ln" x1="250" y1="112" x2="340" y2="112"/>
+      <text class="t-mono" x="258" y="104">1</text><text class="t-mono" x="330" y="104" text-anchor="end">*</text>
+      <text class="t-muted" x="295" y="132" text-anchor="middle" style="font-size:10px">restrict</text>
+      <line class="ln" x1="600" y1="112" x2="690" y2="112"/>
+      <text class="t-mono" x="608" y="104">1</text><text class="t-mono" x="680" y="104" text-anchor="end">*</text>
+      <text class="t-muted" x="645" y="132" text-anchor="middle" style="font-size:10px">cascade</text>
+
+      <text class="t-cap" x="20" y="280">STAND-ALONE TABLES</text>
+      <g>
+        <rect class="box" x="20" y="292" width="230" height="150" rx="5"/>
+        <rect class="box-soft" x="20.6" y="292.6" width="228.8" height="28" rx="4.5"/>
+        <text class="t-title" x="34" y="312">AppUser</text>
+        <text class="t-mono" x="34" y="342">Id</text><text class="t-mono t-muted" x="236" y="342" text-anchor="end">PK</text>
+        <text class="t-mono" x="34" y="360">Username</text><text class="t-mono t-muted" x="236" y="360" text-anchor="end">unique</text>
+        <text class="t-mono" x="34" y="378">PasswordHash</text><text class="t-mono t-muted" x="236" y="378" text-anchor="end">PBKDF2</text>
+        <text class="t-mono" x="34" y="396">Role</text>
+        <text class="t-mono" x="34" y="414">FailedLoginAttempts</text>
+        <text class="t-mono" x="34" y="432">IsLockedOut</text>
+      </g>
+      <g>
+        <rect class="box" x="340" y="292" width="260" height="150" rx="5"/>
+        <rect class="box-soft" x="340.6" y="292.6" width="258.8" height="28" rx="4.5"/>
+        <text class="t-title" x="354" y="312">Reagent</text>
+        <text class="t-mono" x="354" y="342">Id</text><text class="t-mono t-muted" x="586" y="342" text-anchor="end">PK</text>
+        <text class="t-mono" x="354" y="360">Name</text><text class="t-mono t-muted" x="586" y="360" text-anchor="end">index</text>
+        <text class="t-mono" x="354" y="378">LotNumber</text><text class="t-mono t-muted" x="586" y="378" text-anchor="end">with Name</text>
+        <text class="t-mono" x="354" y="396">QuantityOnHand</text>
+        <text class="t-mono" x="354" y="414">ReorderThreshold</text>
+        <text class="t-mono" x="354" y="432">ExpirationDate</text><text class="t-mono t-muted" x="586" y="432" text-anchor="end">date</text>
+      </g>
+      <g>
+        <rect class="box" x="690" y="292" width="290" height="168" rx="5"/>
+        <rect class="box-soft" x="690.6" y="292.6" width="288.8" height="28" rx="4.5"/>
+        <text class="t-title" x="704" y="312">AuditEntry</text>
+        <text class="t-mono" x="704" y="342">Id</text><text class="t-mono t-muted" x="966" y="342" text-anchor="end">PK</text>
+        <text class="t-mono" x="704" y="360">TimestampUtc</text><text class="t-mono t-muted" x="966" y="360" text-anchor="end">index</text>
+        <text class="t-mono" x="704" y="378">Actor</text><text class="t-mono t-muted" x="966" y="378" text-anchor="end">user or instrument:…</text>
+        <text class="t-mono" x="704" y="396">Action</text>
+        <text class="t-mono" x="704" y="414">EntityName</text><text class="t-mono t-muted" x="966" y="414" text-anchor="end">null</text>
+        <text class="t-mono" x="704" y="432">EntityId</text><text class="t-mono t-muted" x="966" y="432" text-anchor="end">null</text>
+        <text class="t-mono" x="704" y="450">Details</text><text class="t-mono t-muted" x="966" y="450" text-anchor="end">null</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Fig. 4</b>Entities and relationships. <code>TestOrder.Barcode</code> is the key that ties the physical specimen, the collection step and the analyzer file together. <code>AuditEntry</code> has no foreign keys: it names its subject by entity type and ID, so one table can log actions on any other.</figcaption>
+  </figure>
+
+  <h3>4.1 Test order lifecycle</h3>
+  <ol class="states" aria-label="Test order status sequence">
+    <li><span class="code">0 · Ordered</span><b>Ordered</b><span class="how">Created by <code>POST /api/test-orders</code> with a generated 6-digit barcode.</span></li>
+    <li><span class="code">1 · Collected</span><b>Collected</b><span class="how">A specimen collector marks the sample collected. A second attempt returns 409.</span></li>
+    <li class="reserved"><span class="code">2 · InProgress</span><b>In progress</b><span class="how">Defined, not set by any code yet.</span></li>
+    <li><span class="code">3 · Resulted</span><b>Resulted</b><span class="how">Set by the ingestion worker when the first matching result arrives.</span></li>
+    <li class="reserved"><span class="code">4 · Validated</span><b>Validated</b><span class="how">Reserved for the result-validation workflow.</span></li>
+  </ol>
+</section>
+
+<section id="api">
+  <div class="sec-head"><span class="sec-num">§ 5</span><h2>API and access control</h2></div>
+  <div class="prose">
+    <p>Endpoints are grouped by feature; each group requires a signed-in user, and individual endpoints add a role policy where the ConOps restricts the action. Interactive documentation is served at <code>/scalar/v1</code> and the OpenAPI description at <code>/openapi/v1.json</code>.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Method</th><th>Route</th><th>Allowed</th><th>Behavior</th><th>ConOps</th></tr></thead>
+      <tbody>
+        <tr><td><span class="verb">GET</span></td><td><code>/health</code></td><td>Anyone</td><td>Liveness check</td><td>—</td></tr>
+        <tr><td><span class="verb">POST</span></td><td><code>/api/auth/login</code></td><td>Anyone</td><td>Returns a JWT; counts failures and locks the account on the 5th</td><td class="num">6.2.6</td></tr>
+        <tr><td><span class="verb">POST</span></td><td><code>/api/auth/unlock/{username}</code></td><td>Lab manager</td><td>Clears lockout and failure count</td><td class="num">6.2.7</td></tr>
+        <tr><td><span class="verb">GET</span></td><td><code>/api/reagents</code></td><td>Any signed-in user</td><td>All reagents, sorted by name</td><td>—</td></tr>
+        <tr><td><span class="verb">GET</span></td><td><code>/api/reagents/alerts</code></td><td>Any signed-in user</td><td>Below reorder threshold, or expiring within 30 days</td><td class="num">6.4.2 · 6.4.6</td></tr>
+        <tr><td><span class="verb">POST</span></td><td><code>/api/reagents/{id}/adjust</code></td><td>Lab manager</td><td>Changes quantity (never below zero) and writes an audit entry</td><td class="num">6.4.3 · 6.4.5</td></tr>
+        <tr><td><span class="verb">GET</span></td><td><code>/api/test-orders</code></td><td>Any signed-in user</td><td>All orders with patient name and results, newest first</td><td>—</td></tr>
+        <tr><td><span class="verb">GET</span></td><td><code>/api/test-orders/{barcode}</code></td><td>Any signed-in user</td><td>One order by barcode, or 404</td><td>—</td></tr>
+        <tr><td><span class="verb">POST</span></td><td><code>/api/test-orders</code></td><td>Any signed-in user</td><td>Creates an order with a unique barcode and an audit entry</td><td>—</td></tr>
+        <tr><td><span class="verb">POST</span></td><td><code>/api/test-orders/{barcode}/collect</code></td><td>Specimen collector, lab manager</td><td>Sets collected time and status; 409 if already collected</td><td class="num">6.3.4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>5.1 Role permissions as implemented</h3>
+  <div class="prose">
+    <p>All six user types from ConOps 6.1.3 exist as roles and have a seeded demo account (password <code>Passw0rd!</code>). The lab manager satisfies every role policy. Policies for lab technician and cashier are defined but no endpoint uses them yet.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Capability</th><th class="c">Lab manager</th><th class="c">Specimen collector</th><th class="c">Lab technician</th><th class="c">Cashier</th><th class="c">Healthcare provider</th><th class="c">Patient</th></tr></thead>
+      <tbody>
+        <tr><td>Sign in; view dashboard, inventory, orders and results</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+        <tr><td>Create a test order <span class="pill pill-none">API only</span></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+        <tr><td>Mark a sample collected</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Adjust reagent stock</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+        <tr><td>Unlock an account <span class="pill pill-none">API only</span></td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td><td class="c no">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><p>The first two rows are wider than a clinical lab would allow: every role, including <strong>Patient</strong>, can read every order and create orders. §11 lists this as the top risk to close before real patient accounts exist.</p></div>
+</section>
+
+<section id="deployment">
+  <div class="sec-head"><span class="sec-num">§ 6</span><h2>Deployment</h2></div>
+  <div class="prose">
+    <p>There is no production environment yet. The system runs on developer machines in two configurations: everything in Docker Compose, or only PostgreSQL in Docker with the API and web app started from the IDE for debugging. The layout below is the one verified in September 2026, including a Windows virtual machine that shares the Mac's database.</p>
+  </div>
+  <figure>
+    <div class="fig-scroll">
+    <svg class="dg" viewBox="0 0 1000 430" role="img" aria-label="Deployment diagram. On the Mac, Docker Compose runs the clms-db PostgreSQL container and optionally a clms-api container; for daily work the API and web dev server run with dotnet run, and native apps call the local API. A Windows virtual machine runs its own API and Windows app from a local clone and connects to the Mac's PostgreSQL over the Parallels shared network.">
+      <defs>
+        <marker id="f5-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-accent" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="f5-ahi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+      <text class="t-cap" x="16" y="22">DEVELOPER MAC · APPLE SILICON</text>
+      <rect class="zone" x="16" y="30" width="640" height="384" rx="8"/>
+      <text class="t-cap" x="690" y="22">WINDOWS 11 ARM · PARALLELS VM</text>
+      <rect class="zone" x="690" y="30" width="294" height="384" rx="8"/>
+
+      <rect class="box-soft" x="36" y="76" width="280" height="200" rx="6"/>
+      <text class="t-cap" x="50" y="96">DOCKER COMPOSE · PROJECT clms</text>
+      <rect class="box" x="52" y="108" width="248" height="58" rx="5"/>
+      <text class="t-title" x="66" y="132">clms-db</text>
+      <text class="t-mono t-muted" x="66" y="152">postgres:17-alpine · :5432</text>
+      <rect class="box" x="52" y="180" width="248" height="80" rx="5"/>
+      <text class="t-title" x="66" y="204">clms-api <tspan class="t-muted" style="font-weight:400;font-family:var(--f-body)">(optional)</tspan></text>
+      <text class="t-mono t-muted" x="66" y="224">Release build · :5090 → 8080</text>
+      <text class="t-mono t-muted" x="66" y="244">mounts ./instrument-drop</text>
+
+      <rect class="box-soft" x="336" y="76" width="300" height="200" rx="6"/>
+      <text class="t-cap" x="350" y="96">DOTNET RUN · DEBUGGING</text>
+      <rect class="box" x="352" y="108" width="268" height="58" rx="5"/>
+      <text class="t-title" x="366" y="132">Clms.Api</text>
+      <text class="t-mono t-muted" x="366" y="152">http://localhost:5090</text>
+      <rect class="box" x="352" y="180" width="268" height="80" rx="5"/>
+      <text class="t-title" x="366" y="204">Clms.Web dev server</text>
+      <text class="t-mono t-muted" x="366" y="224">http://localhost:5080</text>
+      <text class="t-muted" x="366" y="244">browser downloads the app, calls :5090</text>
+      <line class="ln" x1="352" y1="137" x2="304" y2="137" marker-end="url(#f5-ahi)"/>
+
+      <rect class="box" x="36" y="300" width="280" height="96" rx="6"/>
+      <text class="t-title" x="50" y="324">Native apps</text>
+      <text x="50" y="344">iOS Simulator · CLMS.app (Mac Catalyst)</text>
+      <text class="t-mono t-muted" x="50" y="364">call http://localhost:5090</text>
+      <text class="t-muted" x="50" y="384">token in each app's own WebView storage</text>
+      <rect class="box" x="336" y="300" width="300" height="96" rx="6"/>
+      <text class="t-title t-mono" x="350" y="324">instrument-drop/</text>
+      <text x="350" y="344">folder in the repository</text>
+      <text class="t-muted" x="350" y="364">read by whichever API instance is running;</text>
+      <text class="t-muted" x="350" y="384">run one at a time</text>
+
+      <rect class="box" x="710" y="108" width="254" height="70" rx="5"/>
+      <text class="t-title" x="724" y="132">Clms.Api</text>
+      <text class="t-mono t-muted" x="724" y="152">ConnectionStrings__Clms</text>
+      <text class="t-mono t-muted" x="724" y="168">Host=10.211.55.2</text>
+      <rect class="box" x="710" y="192" width="254" height="58" rx="5"/>
+      <text class="t-title" x="724" y="216">Clms.Maui (Windows)</text>
+      <text class="t-mono t-muted" x="724" y="236">win-arm64 · WinUI</text>
+      <rect class="box" x="710" y="264" width="254" height="58" rx="5"/>
+      <text class="t-title" x="724" y="288">Local git clone</text>
+      <text class="t-mono t-muted" x="724" y="308">C:\dev\clms</text>
+      <rect class="box" x="710" y="336" width="254" height="58" rx="5"/>
+      <text class="t-title" x="724" y="360">simulate-instrument.ps1</text>
+      <text class="t-muted" x="724" y="380">PowerShell port of the bash script</text>
+
+      <path class="ln-accent" d="M710,128 L672,128 L672,54 L176,54 L176,104" marker-end="url(#f5-ah)"/>
+      <text class="t-accent" x="424" y="48" text-anchor="middle">Postgres over the Parallels shared network · 10.211.55.2:5432</text>
+    </svg>
+    </div>
+    <figcaption><b>Fig. 5</b>Verified development deployment. The Windows VM builds from its own clone rather than the shared Mac folder, because two operating systems writing the same <code>bin/</code> and <code>obj/</code> folders corrupts builds.</figcaption>
+  </figure>
+</section>
+
+<section id="decisions">
+  <div class="sec-head"><span class="sec-num">§ 7</span><h2>Design decisions</h2></div>
+  <div class="prose"><p>The choices that shape the rest of the system, with what each one costs. Open any row for the rationale.</p></div>
+  <div class="adr">
+    <details open>
+      <summary><span class="id">D-01</span><span class="q">Write the UI once, in a component library, and host it twice</span></summary>
+      <div class="body"><p><b>Decision</b>All pages, layout and client services live in <code>Clms.Ui</code>. The web and native projects only register services and mount <code>Routes</code>.</p><p><b>Why</b>The course team needs a browser app and native apps without maintaining two UIs.</p><p><b>Cost</b>Host-specific styling needs a home outside the library; the stylesheet is currently copied into both hosts.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-02</span><span class="q">Put every business rule behind one HTTP API</span></summary>
+      <div class="body"><p><b>Decision</b>Clients never touch the database. Components depend on the <code>IClmsApi</code> interface, implemented over HTTP.</p><p><b>Why</b>One place enforces roles, lockout and audit logging, whichever client is used.</p><p><b>Cost</b>Every screen needs the API reachable; there is no offline data.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-03</span><span class="q">Share C# contracts instead of generating clients</span></summary>
+      <div class="body"><p><b>Decision</b>Request and response records live in <code>Clms.Shared</code>, referenced by both sides.</p><p><b>Why</b>A contract change breaks the build on both sides at once, with no code-generation step.</p><p><b>Cost</b>Only .NET clients benefit; a non-.NET client would use the OpenAPI description instead.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-04</span><span class="q">Stateless JWT with the role inside the token</span></summary>
+      <div class="body"><p><b>Decision</b>Sign-in returns an HS256 token with name and role, valid for 480 minutes. One authorization policy per role; the lab manager passes all of them.</p><p><b>Why</b>No session store to run, and the same token works for the browser and native apps.</p><p><b>Cost</b>A role change or lockout doesn't affect a token already issued until it expires. There is no revocation.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-05</span><span class="q">Receive analyzer results from a polled folder</span></summary>
+      <div class="body"><p><b>Decision</b>A background service inside the API scans <code>instrument-drop/</code> every 5 seconds, following the file format in ConOps 6.3.5.</p><p><b>Why</b>File-change notifications are unreliable across Docker bind mounts and network shares; polling works everywhere.</p><p><b>Cost</b>Up to 5 seconds of latency, and only one API instance may run the worker or files are processed twice.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-06</span><span class="q">Generate primary keys in the application</span></summary>
+      <div class="body"><p><b>Decision</b>Entities assign <code>Guid.NewGuid()</code> and EF Core is told keys are never database-generated.</p><p><b>Why</b>An audit entry can reference a record's ID before the first save.</p><p><b>Cost</b>The EF configuration is required: without it, results added to an existing order were sent as UPDATEs and ingestion failed.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-07</span><span class="q">Store result values as text</span></summary>
+      <div class="body"><p><b>Decision</b><code>TestResult.Value</code> is a string.</p><p><b>Why</b>Analyzers send quantitative (“28”) and qualitative (“Absent”) values in the same field.</p><p><b>Cost</b>Reference-range checks and numeric reports will need to parse values per test code.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-08</span><span class="q">Create the schema on startup (temporary)</span></summary>
+      <div class="body"><p><b>Decision</b>The API calls <code>EnsureCreated</code> and seeds demo data on first boot.</p><p><b>Why</b>A new team member can run the system with no database setup steps.</p><p><b>Cost</b>The schema cannot evolve. Switch to EF Core migrations before the next model change.</p></div>
+    </details>
+    <details>
+      <summary><span class="id">D-09</span><span class="q">Cache the web app shell, never the data</span></summary>
+      <div class="body"><p><b>Decision</b>The PWA service worker caches the app's static files and always sends <code>/api/</code> requests to the network.</p><p><b>Why</b>Lab results and stock levels must be current; a stale result is worse than no result.</p><p><b>Cost</b>The app opens without a connection but shows no data.</p></div>
+    </details>
+  </div>
+</section>
+
+<section id="security">
+  <div class="sec-head"><span class="sec-num">§ 8</span><h2>Security</h2></div>
+  <div class="grid-2">
+    <div class="panel"><h3>Authentication</h3><ul>
+      <li>Passwords hashed with PBKDF2-SHA256, 100,000 iterations, 16-byte random salt, compared in constant time.</li>
+      <li>Account locks after 5 consecutive failures and returns 423 until a lab manager unlocks it.</li>
+      <li>An unknown username and a wrong password both return 401.</li>
+      <li>Tokens are checked for signature, issuer <code>clms-api</code>, audience <code>clms-clients</code> and expiry, with 1 minute of clock skew.</li>
+    </ul></div>
+    <div class="panel"><h3>Authorization</h3><ul>
+      <li>Inventory and order routes require a signed-in user at the group level.</li>
+      <li>Restricted actions add a role policy on the endpoint (§5).</li>
+      <li><code>AuthorizeView</code> hides controls the role can't use, for usability only.</li>
+    </ul></div>
+    <div class="panel"><h3>Audit trail</h3><ul>
+      <li>Written for <code>AccountLockedOut</code>, <code>AdjustStock</code>, <code>CreateTestOrder</code>, <code>CollectSample</code> and <code>ResultReceived</code>, in the same transaction as the change.</li>
+      <li>Not yet written for successful sign-ins or account unlocks. No screen displays the log.</li>
+    </ul></div>
+    <div class="panel"><h3>Configuration and transport</h3><ul>
+      <li>CORS admits only the configured client origins.</li>
+      <li>Development runs over plain HTTP. The JWT signing key and database password are in checked-in config, acceptable only for development.</li>
+      <li>The web client keeps the token in <code>localStorage</code>, where any script running on the page can read it.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="quality">
+  <div class="sec-head"><span class="sec-num">§ 9</span><h2>Quality attributes</h2></div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Attribute</th><th>How the architecture addresses it</th><th>Evidence today</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Portability</strong></td><td>One UI library; the native project picks its build targets from the host OS.</td><td>Run on macOS (browser, iOS Simulator, Mac Catalyst) and Windows 11 ARM (browser stack, Windows app).</td></tr>
+        <tr><td><strong>Testability</strong></td><td>Parsing is a pure function separated from file I/O and the database.</td><td>18 xUnit tests; API endpoints and UI have no automated tests yet.</td></tr>
+        <tr><td><strong>Reliability of ingestion</strong></td><td>Files are moved, never deleted; each problem is reported per line; files still being written are retried; re-dropping a file adds no duplicates; one bad sweep can't stop the worker.</td><td>Good and malformed sample files verified end to end on both platforms.</td></tr>
+        <tr><td><strong>Traceability</strong></td><td>Audit entries record actor, action, subject and details for each state change.</td><td>Five actions logged (§8).</td></tr>
+        <tr><td><strong>Extensibility</strong></td><td>New features follow one path: entity, endpoint group, shared records, <code>IClmsApi</code> methods, page. Roles for all six ConOps user types already exist.</td><td>Billing, reporting and patient screens have an obvious home but no code.</td></tr>
+        <tr><td><strong>Performance</strong></td><td>Not yet a design driver. Barcode lookups use a unique index.</td><td>Order and reagent lists are unpaginated; ingestion runs one query per result line.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="trace">
+  <div class="sec-head"><span class="sec-num">§ 10</span><h2>Requirements traceability</h2></div>
+  <div class="prose"><p>ConOps sections referenced in the source code, and where each is implemented. Requirement wording is paraphrased from the code comments; confirm it against the ConOps before relying on this table.</p></div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>ConOps</th><th>Requirement</th><th>Implemented in</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="num">6.1.3</td><td>User types and role-based access</td><td><code>ClmsRoles</code>, per-role policies, <code>AuthorizeView</code></td><td><span class="pill pill-warn">Partial</span><br><small class="no">All six roles exist; role-specific actions only for lab manager and specimen collector</small></td></tr>
+        <tr><td class="num">6.2.6</td><td>Lock an account after 5 failed attempts and email the lab manager</td><td><code>POST /api/auth/login</code></td><td><span class="pill pill-warn">Partial</span><br><small class="no">Lockout built; email not built (marked in code)</small></td></tr>
+        <tr><td class="num">6.2.7</td><td>Only a lab manager clears a lockout</td><td><code>POST /api/auth/unlock/{username}</code></td><td><span class="pill pill-warn">Partial</span><br><small class="no">API only, no screen</small></td></tr>
+        <tr><td class="num">6.3.4</td><td>Specimen collector marks the sample collected and prints its barcode</td><td><code>…/collect</code>, Test Orders page, barcode generation</td><td><span class="pill pill-warn">Partial</span><br><small class="no">Collection built; label printing not built</small></td></tr>
+        <tr><td class="num">6.3.5</td><td>Receive results from lab instruments</td><td><code>InstrumentFileWatcher</code>, <code>InstrumentMessageParser</code></td><td><span class="pill pill-ok">Built</span></td></tr>
+        <tr><td class="num">6.3.6 · 6.5.1</td><td>Activity and transaction logging</td><td><code>AuditEntry</code></td><td><span class="pill pill-warn">Partial</span><br><small class="no">Five actions logged; no viewer</small></td></tr>
+        <tr><td class="num">6.4.2</td><td>Flag reagent stock below its reorder threshold</td><td><code>/api/reagents/alerts</code>, Dashboard, Inventory</td><td><span class="pill pill-ok">Built</span></td></tr>
+        <tr><td class="num">6.4.3</td><td>Purchase orders for reagents</td><td>Manual stock adjustment only</td><td><span class="pill pill-none">Not built</span></td></tr>
+        <tr><td class="num">6.4.5</td><td>Only a lab manager updates inventory</td><td>LabManager policy on adjust; buttons hidden for other roles</td><td><span class="pill pill-ok">Built</span></td></tr>
+        <tr><td class="num">6.4.6</td><td>Warn about reagents expiring within 30 days</td><td>Alerts endpoint, dashboard and inventory badges</td><td><span class="pill pill-ok">Built</span></td></tr>
+        <tr><td class="num">6.5.2–6.5.4</td><td>Reporting</td><td>—</td><td><span class="pill pill-none">Not built</span></td></tr>
+        <tr><td class="num">6.6</td><td>Point of sale and billing</td><td>Cashier role defined</td><td><span class="pill pill-none">Not built</span></td></tr>
+        <tr><td>—</td><td>Patient management screens</td><td><code>Patient</code> table, seeded</td><td><span class="pill pill-none">Not built</span></td></tr>
+        <tr><td>—</td><td>Result validation workflow</td><td><code>Validated</code> status reserved</td><td><span class="pill pill-none">Not built</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="risks">
+  <div class="sec-head"><span class="sec-num">§ 11</span><h2>Risks and technical debt</h2></div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Severity</th><th>Risk</th><th>Consequence</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-crit">High</span></td><td>Every signed-in role, including Patient, can read all test orders and results.</td><td>One patient could see another patient's results once real accounts exist.</td><td>Filter order queries by role and patient before adding patient sign-in.</td></tr>
+        <tr><td><span class="pill pill-crit">High</span></td><td>Any signed-in role can create test orders; the endpoint has no role policy.</td><td>A cashier or patient account could place orders.</td><td>Add a policy for the roles the ConOps allows to order tests.</td></tr>
+        <tr><td><span class="pill pill-warn">Medium</span></td><td>Analyzer timestamps carry no time zone and are read as UTC.</td><td>If analyzers write local time, stored result times are off by the UTC offset.</td><td>Confirm analyzer clock settings; add a per-instrument offset.</td></tr>
+        <tr><td><span class="pill pill-warn">Medium</span></td><td>Duplicate detection compares test code and timestamp only.</td><td>A corrected re-run in the same minute with a different value is silently dropped.</td><td>Treat a changed value as a correction and flag it for validation.</td></tr>
+        <tr><td><span class="pill pill-warn">Medium</span></td><td>The ingestion worker runs inside every API instance.</td><td>Two instances would race on the same files.</td><td>Run one worker, or claim each file by renaming it before processing.</td></tr>
+        <tr><td><span class="pill pill-warn">Medium</span></td><td>Schema created with <code>EnsureCreated</code>.</td><td>No way to change the schema without dropping data.</td><td>Adopt EF Core migrations before the next model change.</td></tr>
+        <tr><td><span class="pill pill-warn">Medium</span></td><td>Signing key and database password in checked-in config; token in <code>localStorage</code>; no revocation for 8 hours.</td><td>Unsafe outside a development machine.</td><td>Move secrets to user-secrets or environment variables; shorten token lifetime and add refresh.</td></tr>
+        <tr><td><span class="pill pill-none">Low</span></td><td>Unlocking an account is not audited and has no screen.</td><td>Lockout recovery can't be traced or done from the app.</td><td>Add an audit entry and a lab manager screen.</td></tr>
+        <tr><td><span class="pill pill-none">Low</span></td><td>Order and reagent lists load in full.</td><td>Slows down as history grows.</td><td>Add paging and date filters to list endpoints.</td></tr>
+        <tr><td><span class="pill pill-none">Low</span></td><td>The stylesheet is copied into both hosts; package versions float (<code>10.0.*</code>, <code>2.*</code>).</td><td>Styles drift between hosts; builds can differ between machines.</td><td>Serve the CSS from <code>Clms.Ui</code>; pin package versions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  Derived from the CLMS source code at commit <span class="mono">b416097</span>, 15 September 2026. The diagrams describe what the code does today; where they disagree with the ConOps, the ConOps is the requirement and this document should be updated.
+</footer>
+</main>
+</div>
+</body>
+</html>

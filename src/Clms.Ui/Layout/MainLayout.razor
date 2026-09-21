@@ -1,0 +1,32 @@
+@inherits LayoutComponentBase
+@inject ClmsAuthStateProvider Auth
+@inject NavigationManager Nav
+
+<div class="clms-shell">
+    <header class="clms-header">
+        <span class="clms-brand">CLMS</span>
+        <AuthorizeView>
+            <Authorized>
+                <NavMenu />
+                <span class="clms-spacer"></span>
+                <span class="clms-user">
+                    @context.User.Identity?.Name
+                    <span class="clms-role">@Auth.CurrentRole</span>
+                </span>
+                <button class="clms-linkbtn" @onclick="SignOutAsync">Sign out</button>
+            </Authorized>
+        </AuthorizeView>
+    </header>
+
+    <main class="clms-main">
+        @Body
+    </main>
+</div>
+
+@code {
+    private async Task SignOutAsync()
+    {
+        await Auth.SignOutAsync();
+        Nav.NavigateTo("/", forceLoad: false);
+    }
+}
