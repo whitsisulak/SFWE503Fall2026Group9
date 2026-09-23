@@ -1,28 +1,29 @@
 # CLMS Project Plan
 
-Planned for a team of 4 using AI coding assistance. MVP1 cuts at the end of Sprint 2 (Oct 19, 2026) as one end-to-end slice — order a test, collect and barcode the sample, enter a result, read it on the patient record — and MVP2 takes Sprints 3 to 5 through access control, inventory, instrument ingest, point of sale and reporting, finishing Nov 30, 2026. 42 stories, 118 points, 12 epics, traced to the ConOps requirement numbers.
+Planned for a team of 4 using AI coding assistance. MVP1 cuts at the end of Sprint 2 (Oct 16, 2026) as one end-to-end slice — order a test, collect and barcode the sample, enter a result, read it on the patient record — and MVP2 takes Sprints 3 to 6 through access control, inventory, instrument ingest, point of sale, reporting and the release build, finishing Dec 11, 2026. 42 stories, 118 points, 12 epics, traced to the ConOps requirement numbers.
 
 ## MVP goals
 
 Two increments are demonstrated and graded. Both are cumulative — each builds on everything before it.
 
-**MVP1 — Sprint 2, cut Mon Oct 19, 2026.** One test travels the whole path end to end: a patient walks in, a test is ordered with its ordering physician and insurance captured, a barcoded sample is collected, a technician enters the result, and the result appears on the patient's record. Everything in Sprint 2 exists to make that single path demonstrable; anything that does not serve it — role-based access control included — is deliberately held back to Sprint 3. Demoed in the week of Oct 19 alongside the MVP1 summary.
+**MVP1 — Sprint 2, cut Fri Oct 16, 2026.** One test travels the whole path end to end: a patient walks in, a test is ordered with its ordering physician and insurance captured, a barcoded sample is collected, a technician enters the result, and the result appears on the patient's record. Everything in Sprint 2 exists to make that single path demonstrable; anything that does not serve it — role-based access control included — is deliberately held back to Sprint 3. Demoed in the week of Oct 19 alongside the MVP1 summary.
 
-**MVP2 — Sprints 3 to 5, cut Mon Nov 30, 2026.** The whole system, not Sprint 5 alone. On top of MVP1 it adds access control closed across the six user types and no test running on missing or expired reagents (Sprint 3); analyzer files posting themselves, point-of-sale checkout and one unified activity log (Sprint 4); and the closed replenishment loop with the financial, inventory and operational reports (Sprint 5). It ships as a tagged release with a seeded demo dataset, and it is what the final status review runs against.
+**MVP2 — Sprints 3 to 6, cut Fri Dec 11, 2026.** The whole system, not the last sprint alone. On top of MVP1 it adds access control closed across the six user types and no test running on missing or expired reagents (Sprint 3); analyzer files posting themselves, point-of-sale checkout and one unified activity log (Sprint 4); and the closed replenishment loop with the financial, inventory and operational reports (Sprint 5); and the tagged release build and review pack (Sprint 6). It ships as a tagged release with a seeded demo dataset, and it is what the final status review runs against.
 
 ## Sprint calendar and MVP split
 
-Sprint 1 starts today. The five sprints sit on weeks 5 through 14 of your calendar, two weeks each, running Monday to Monday: each sprint ends on the same Monday the next one starts, with the sprint review and retrospective in the morning and planning for the next sprint that afternoon. Sprint 5 closes on Monday, Nov 30, the first day of week 15.
+The course calendar runs six sprints across weeks 5 through 16, two weeks each, Monday to Friday. A sprint ends on its second Friday; hold the sprint review and retrospective that Friday and plan the next sprint on the following Monday. The backlog runs across all six, closing on Friday, Dec 11.
 
-| Sprint | Weeks | Start (Mon) | End (Mon) | Sprint goal | Planned | Capacity |
+| Sprint | Weeks | Start (Mon) | End (Fri) | Sprint goal | Planned | Capacity |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 5–6 | Sep 21 | Oct 5 | A manager can log in and create staff accounts on a deployed stack | 21 | 22 |
-| 2 | 7–8 | Oct 5 | Oct 19 | **MVP1** — one test goes order → sample → result → patient record | 25 | 25 |
-| 3 | 9–10 | Oct 19 | Nov 2 | Access control closed; no test runs on missing or expired reagents | 27 | 25 |
-| 4 | 11–12 | Nov 2 | Nov 16 | Analyzer files post themselves; patients check out and pay; everything is logged | 25 | 25 |
-| 5 | 13–14 | Nov 16 | Nov 30 | **MVP2** — replenishment, the four reports, release build | 20 | 19 |
+| 1 | 5–6 | Sep 21 | Oct 2 | A manager can log in and create staff accounts on a deployed stack | 21 | 22 |
+| 2 | 7–8 | Oct 5 | Oct 16 | **MVP1** — one test goes order → sample → result → patient record | 25 | 25 |
+| 3 | 9–10 | Oct 19 | Oct 30 | Access control closed; no test runs on missing or expired reagents | 27 | 25 |
+| 4 | 11–12 | Nov 2 | Nov 13 | Analyzer files post themselves; patients check out and pay; everything is logged | 25 | 25 |
+| 5 | 13–14 | Nov 16 | Nov 27 | Replenishment loop closes; financial, inventory and operational reports | 15 | 19 |
+| 6 | 15–16 | Nov 30 | Dec 11 | **MVP2** — tagged release, review pack, contingency for carryover | 5 | 15 |
 
-**Velocity with AI assistance: 25 points per sprint for 4 people.** The scale is unchanged — 1 point ≈ 2–3 hours of unassisted work — so do not re-point stories because a tool writes them faster. Points measure the work; velocity measures how fast you get through it. Let Sprint 1 measure the real multiplier and reflow from actuals at the Oct 5 retrospective.
+**Velocity with AI assistance: 25 points per sprint for 4 people.** The scale is unchanged — 1 point ≈ 2–3 hours of unassisted work — so do not re-point stories because a tool writes them faster. Points measure the work; velocity measures how fast you get through it. Let Sprint 1 measure the real multiplier and reflow from actuals at the Oct 2 retrospective.
 
 The 25-point figure assumes roughly a third more throughput than 4 people unassisted, not double. Code generation compresses the forms, CRUD screens, migrations, report queries and unit tests that make up most of E3, E4, E8 and E10. It compresses almost nothing in Sprint 1: container networking, database wiring and environment debugging are where these projects actually stall, which is why Sprint 1 is held at 22. Sprint 5 is cut to 19 because Thanksgiving on Nov 26 takes two to three working days out of it.
 
@@ -45,11 +46,11 @@ Twelve epics cover the ConOps. Two of them (E1, E12) are enabler epics with no u
 | <a id="epic-e9"></a>E9 Billing, POS & purchasing | Checkout, payment types, signature, receipts | 6.6.1–6.6.4 | 4–5 | 4 | 9 |
 | <a id="epic-e10"></a>E10 Reporting & analytics | Financial, inventory and operational reports on one engine | 6.5.2–6.5.4 | 5 | 3 | 6 |
 | <a id="epic-e11"></a>E11 Lab profile | Laboratory information record | 6.1.1 | 3 | 1 | 2 |
-| <a id="epic-e12"></a>E12 Quality & release readiness | CI, release build, review pack | Course deliverables | 1, 5 | 3 | 7 |
+| <a id="epic-e12"></a>E12 Quality & release readiness | CI, release build, review pack | Course deliverables | 1, 6 | 3 | 7 |
 
 Story IDs run CLMS-1 to CLMS-47 with gaps: six stories were folded into their parents where they shared a screen, a query or an engine — patient search into the patient record (CLMS-15), ordering physician into the order field set (CLMS-16), instrument registry into result matching (CLMS-32), the transaction log into the activity log (CLMS-42), supply receipt into the purchase order (CLMS-39), and the two secondary reports onto the financial report's engine. Priority is MoSCoW **against the sprint it sits in**, not against the whole project — a "Could" is the row you drop first when that sprint is in trouble.
 
-## Sprint 1 — Foundation and the login spine (Sep 21 – Oct 5)
+## Sprint 1 — Foundation and the login spine (Sep 21 – Oct 2)
 
 **Goal:** a laboratory manager can log in to a running, containerized system and create staff accounts for the other five user types. 21 points against 22 capacity.
 
@@ -70,7 +71,7 @@ Story IDs run CLMS-1 to CLMS-47 with gaps: six stories were folded into their pa
 
 **Definition of done from Sprint 1 onward:** merged to main behind review by someone who did not write or prompt for it, unit tests for new logic, migration included, runs from a clean compose up, and every merged file explainable by the person who merged it.
 
-## Sprint 2 — MVP1: one test end to end (Oct 5 – Oct 19)
+## Sprint 2 — MVP1: one test end to end (Oct 5 – Oct 16)
 
 **Goal:** a patient walks in, a test is ordered with its physician and insurance captured, a barcoded sample is collected, a technician enters the result, and it appears on the patient's record. 25 points against 25 capacity.
 
@@ -85,13 +86,13 @@ This is the MVP1 scope. Everything in it exists to make that single path demonst
 | CLMS-20 | [E6](#epic-e6) | As a laboratory technician, I want to enter a result with value, units, reference range and status so that results are captured before machine integration exists | 3 | Must | §4 Result Validation | Result can be entered with value, units, reference range, and status with no instrument connection. Entered result is attached to the correct sample and order. Result is visible before any instrument integration exists. |
 | CLMS-22 | [E5](#epic-e5) | As laboratory personnel, I want to see every sample and test for a patient with its current status so that work in progress is traceable | 3 | Must | 6.3.5 | Every sample and test for a patient displays with its current status. Status reflects the true state (ordered, collected, resulted, etc.). List updates as a sample/test progresses. |
 
-**CLMS-18 is the story to start first and the one to keep away from a code generator until the model is settled.** The Oct 1 note fixes six field groups, and that field set is effectively the core data model for the whole system — Sprints 3 to 5 all read from it. Design the schema as a team on a whiteboard, agree it, then generate the forms and validation against it. Reversed, you get a plausible-looking model that quietly does not support instrument results or billing, and you find out in Sprint 4.
+**CLMS-18 is the story to start first and the one to keep away from a code generator until the model is settled.** The Oct 1 note fixes six field groups, and that field set is effectively the core data model for the whole system — Sprints 3 to 6 all read from it. Design the schema as a team on a whiteboard, agree it, then generate the forms and validation against it. Reversed, you get a plausible-looking model that quietly does not support instrument results or billing, and you find out in Sprint 4.
 
 **Freeze the CLMS-18 field set at the MVP1 demo** and change it only by change request from then on.
 
 **CLMS-21 has moved to Sprint 3 to make room for the re-pointed CLMS-18 and CLMS-14. A single-signature result still demonstrates the end-to-end path at MVP1; the pathologist's second signature lands in Sprint 3**.
 
-## Sprint 3 — Access control and reagent gating (Oct 19 – Nov 2)
+## Sprint 3 — Access control and reagent gating (Oct 19 – Oct 30)
 
 **Goal:** the six user types see only what they should, accounts survive an attack, and no sample is collected or tested against missing or expired reagents. 27 points against 25 capacity — 2 over after re-pointing and taking CLMS-21 from Sprint 2.
 
@@ -118,7 +119,7 @@ Demo MVP1 in the first two days of this sprint off the Sprint 2 increment, run t
 
 **Spillover candidates:** CLMS-23, then CLMS-6. Both are single screens with no dependents.
 
-## Sprint 4 — Instrument ingest, point of sale and the event log (Nov 2 – Nov 16)
+## Sprint 4 — Instrument ingest, point of sale and the event log (Nov 2 – Nov 13)
 
 **Goal:** analyzer output files post themselves onto the right sample, a patient can check out, sign and pay, and everything the system does is on one log. 25 points against 25 capacity.
 
@@ -140,21 +141,17 @@ Demo MVP1 in the first two days of this sprint off the Sprint 2 increment, run t
 
 **Spillover candidate****: CLMS-36. CLMS-37 has moved to Sprint 5 to make room for the re-pointed CLMS-31 and CLMS-29**. A sale that records payment is demonstrable without a signature capture or a printed receipt.
 
-## Sprint 5 — MVP2: replenishment, reporting and release (Nov 16 – Nov 30)
+## Sprint 5 — Replenishment and reporting (Nov 16 – Nov 27)
 
-**Goal:** the inventory loop closes, managers can pull the required reports, and there is a tagged release with a seeded demo dataset. 20 points against 19 capacity — 1 over after taking CLMS-37 from Sprint 4, with the two Could stories as the release valve — in a sprint that loses two to three working days to Thanksgiving on Nov 26.
+**Goal:** the inventory loop closes and managers can pull the required reports. 15 points against 19 capacity — comfortable after moving the release build and review pack to Sprint 6, with the two Could stories as the release valve — in a sprint that loses its last two working days to Thanksgiving on Nov 26.
 
-**MVP2 is the cumulative Sprints 3–5 increment, not this sprint alone** — see [MVP goals](#mvp-goals) for what the final demonstration has to cover.
-
-Plan the final status review for the week of Nov 23 and treat Nov 24 as the content freeze. Your final individual team evaluation and personal reflection also land here.
+**MVP2 is the cumulative Sprints 3–6 increment, not this sprint alone** — see [MVP goals](#mvp-goals) for what the final demonstration has to cover.
 
 | ID | Epic | Story | Points | Priority | Trace | Acceptance Criteria |
 | --- | --- | --- | --- | --- | --- | --- |
 | CLMS-38 | [E8](#epic-e8) | As a laboratory manager, I want to raise a purchase order when stock runs low and have inventory update when the distributor's shipment is received so that the low-stock alert leads all the way to restocked shelves | 3 | Must | 6.4.3, 6.4.4 | Manager can raise a purchase order when stock falls below the low-stock threshold. Receiving the distributor's shipment updates inventory to reflect the received quantity. Loop is traceable end to end: alert → PO → receipt → updated stock. |
 | CLMS-40 | [E8](#epic-e8) | As a laboratory manager, I want to adjust inventory on use and remove expired stock with the reason recorded in the activity log so that write-offs are accountable | 3 | Must | 6.4.5, 6.4.7 | Manager can adjust inventory for use and remove expired stock through the UI. Each adjustment/removal writes a reason to the activity log. Adjusted stock level matches the recorded reason and quantity. |
 | CLMS-43 | [E10](#epic-e10) | As a laboratory manager, I want a financial report with statistics for a date range so that I can report on lab revenue | 3 | Must | 6.5.2 | Financial report runs for a manager-selected date range. Report totals reconcile against the underlying transaction/event log for that range. Report can be generated with no manual data entry beyond selecting the date range. |
-| CLMS-46 | [E12](#epic-e12) | As the team, I want a tagged release build with a seeded demo dataset so that the final demonstration runs the same way every time | 3 | Must | Course deliverable | A tagged release build exists with a seeded demo dataset. Running the release build from a clean environment reproduces the same demo state every time. Release is tagged/versioned so it can be re-run without rebuilding from source changes. |
-| CLMS-47 | [E12](#epic-e12) | As the team, I want the review pack assembled — velocity, technical debt, risk burndown | 2 | Must | Course deliverable | Review pack includes velocity, technical debt, and risk burndown sections. Technical debt section names what was generated, reviewed, and not yet reviewed. Review pack is assembled and ready before the final status review, not during it. |
 | CLMS-37 | [E9](#epic-e9) | As a cashier, I want to generate and print a receipt for the whole purchase so that the patient leaves with proof of payment | 2 | Should | 6.6.3 | Receipt can be generated and printed for the whole purchase. Receipt lists items, payment method, and total. Receipt generation does not require re-entering transaction data. |
 | CLMS-45 | [E10](#epic-e10) | As a laboratory technician, I want an operational report covering turnaround time, machine performance and maintenance so that bottlenecks are visible | 2 | Should | 6.5.4 | Operational report covers turnaround time, machine performance, and maintenance for a selectable range. Report data derives from the event log, with no separate manual tracking. Bottlenecks (e.g., slow turnaround) are visible directly in the report output. |
 | CLMS-44 | [E10](#epic-e10) | As a laboratory manager, I want an inventory report for a date range so that stock turnover is visible | 1 | Could | 6.5.3 | Inventory report covers a manager-selected date range. Report shows stock turnover (in/out movement), not just a point-in-time snapshot. Report reuses the Sprint 5 report engine rather than a separate query path. |
@@ -162,11 +159,24 @@ Plan the final status review for the week of Nov 23 and treat Nov 24 as the cont
 
 **Order matters here more than in any other sprint.** CLMS-43 reports on what CLMS-29 logged in Sprint 4, so the log has to be right before the report is built. Build the report engine once for CLMS-43 and CLMS-44 and CLMS-45 become a query and a view each — that is why they are 1 and 2 points rather than 3 apiece.
 
-**Schedule CLMS-46 and CLMS-47 for the week of Nov 16, not the last two days.** They are the inputs to a 15% deliverable and they are the first things squeezed if the reports run long. The review pack is also where your AI-assisted development shows up: the technical debt discussion should name what was generated, what was reviewed, and what you know you have not read.
+**If velocity slips:** drop CLMS-41 and CLMS-44, then CLMS-45. They land in Sprint 6, which is planned light for exactly this.
 
-**If velocity** **slips:** drop CLMS-41 and CLMS-44, then CLMS-45. Never drop CLMS-46 or CLMS-47.
+## Sprint 6 — Release and final review (Nov 30 – Dec 11)
 
-## Deferred — in the ConOps, out of the five sprints
+**Goal:** a tagged release build that reproduces the demo the same way every time, and a review pack assembled before the final status review rather than during it. 5 points against 15 capacity.
+
+**The slack is deliberate.** This sprint runs into the end of the semester, when final exams and other courses compete for the same hours, and it is the landing zone for anything that slipped: Sprint 3 is planned 2 points over capacity and Sprint 5 loses its last two days to Thanksgiving. Plan it light and let carryover fill it. If nothing slips, the time goes into rehearsing the demo and reading code nobody has read yet.
+
+| ID | Epic | Story | Points | Priority | Trace | Acceptance Criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| CLMS-46 | [E12](#epic-e12) | As the team, I want a tagged release build with a seeded demo dataset so that the final demonstration runs the same way every time | 3 | Must | Course deliverable | A tagged release build exists with a seeded demo dataset. Running the release build from a clean environment reproduces the same demo state every time. Release is tagged/versioned so it can be re-run without rebuilding from source changes. |
+| CLMS-47 | [E12](#epic-e12) | As the team, I want the review pack assembled — velocity, technical debt, risk burndown | 2 | Must | Course deliverable | Review pack includes velocity, technical debt, and risk burndown sections. Technical debt section names what was generated, reviewed, and not yet reviewed. Review pack is assembled and ready before the final status review, not during it. |
+
+**Plan the final status review for the week of Dec 7 and treat Dec 8 as the content freeze.** Your final individual team evaluation and personal reflection also land here.
+
+**Never drop CLMS-46 or CLMS-47.** They are the inputs to a 15% deliverable. The review pack is also where your AI-assisted development shows up: the technical debt discussion should name what was generated, what was reviewed, and what you know you have not read.
+
+## Deferred — in the ConOps, out of the six sprints
 
 Every numbered requirement in §6 is covered by a story. These are §4 capabilities with no numbered requirement behind them — put them in the Jira backlog as ranked-but-unscheduled so the product backlog is visibly groomed and the exclusions read as deliberate.
 
@@ -181,7 +191,7 @@ Every numbered requirement in §6 is covered by a story. These are §4 capabilit
 | Multi-branch laboratory network | §4 Integration, §5.1 | §5.1 states multi-lab and cloud scaling as future expansion, not current scope |
 | Compliance reports (CDC disease spread, audit exports) | §4 Reporting | CLMS-29's event log is the data source; the export itself is a later story |
 | Multi-platform / mobile client | §5.1 | §5.1 states desktop-optimized now, multi-platform later; a MAUI prototype exists as a feasibility spike, not committed sprint scope |
-| Data security and privacy (HIPAA/GDPR) | §4 Regulatory Compliance, Objective 8 | No numbered §6 requirement specifies encryption, access-logging depth, or a compliance control set; RBAC (E2) and the activity log (CLMS-29) cover access control and audit trail, but formal HIPAA/GDPR compliance work is undefined scope and out of the five sprints |
+| Data security and privacy (HIPAA/GDPR) | §4 Regulatory Compliance, Objective 8 | No numbered §6 requirement specifies encryption, access-logging depth, or a compliance control set; RBAC (E2) and the activity log (CLMS-29) cover access control and audit trail, but formal HIPAA/GDPR compliance work is undefined scope and out of the six sprints |
 
 If any of these matter to your stakeholder, raise them as change requests using the template on page 11 rather than dropping them silently — the ConOps has a change-request process and using it is cheap evidence of process discipline.
 
@@ -191,13 +201,13 @@ Five risks shape the ordering above; each has its mitigation built into a sprint
 
 | Risk | Impact | Mitigation in the plan |
 | --- | --- | --- |
-| The 25-point velocity assumes an AI multiplier the team has not measured | Every sprint after the first is planned against a guess | Sprint 1 held to 22; re-baseline from actuals at the Oct 5 retrospective and reflow the bottom rows of Sprints 3–5 before committing |
+| The 25-point velocity assumes an AI multiplier the team has not measured | Every sprint after the first is planned against a guess | Sprint 1 held to 22; re-baseline from actuals at the Oct 2 retrospective and reflow the bottom rows of Sprints 3–6 before committing |
 | Sprint 1 is environment work, where code generation helps least | The sprint that everything queues behind is the one most likely to overrun | Strongest infrastructure pair on CLMS-1 to CLMS-4, no parallel work until the stack comes up clean, CI landed inside the sprint |
 | The CLMS-18 field set is the de facto data model | Getting it wrong reworks every later sprint, and a generator will produce a plausible wrong one fast | Schema agreed by the team before any generation, scheduled first in Sprint 2, frozen at the MVP1 demo, changed only by change request |
 | Generated code outpaces review | Nobody can explain the codebase at the final status review, where technical debt is graded | Review by a non-author in the definition of done; the Sprint 5 review pack names what was generated, reviewed, and not read |
-| Sprint 5 loses 2–3 days to Thanksgiving and carries the 15% deliverable | Final review prepared in a rush or not at all | CLMS-46 and CLMS-47 scheduled in week 1; two Could stories held as the release valve; content freeze Nov 24 |
+| Sprint 5 loses its last two days to Thanksgiving, and Sprint 6 carries the 15% deliverable into finals | Final review prepared in a rush or not at all | Release build and review pack moved to Sprint 6, which is planned at 5 points against 15 capacity; two Could stories held as the release valve; content freeze Dec 8 |
 
-**Course deliverables riding on this schedule.** A sprint backlog and a retrospective are due after each of the five sprints — 10% each, 20% together, more than the final demo's 15%. The MVP1 summary and demo plus your first individual team evaluation fall in the week of Oct 19. The risk and opportunity assessment is due early and gets re-burned-down at each review; the five rows above are your starting register. As a 503 student you also owe a Jira dashboard and metrics interpretation after every sprint — stand the dashboard up during Sprint 1 while there is slack, not in Sprint 5.
+**Course deliverables riding on this schedule.** A sprint backlog and a retrospective are due after each of the six sprints — 10% each, 20% together, more than the final demo's 15%. The MVP1 summary and demo plus your first individual team evaluation fall in the week of Oct 19. The risk and opportunity assessment is due early and gets re-burned-down at each review; the five rows above are your starting register. As a 503 student you also owe a Jira dashboard and metrics interpretation after every sprint — stand the dashboard up during Sprint 1 while there is slack, not in Sprint 5.
 
 **Open question:** if any of the four of you is carrying a materially lighter or heavier load than the others, say so before Sprint 1 planning. The 25-point velocity assumes four roughly equal contributors, and the team-evaluation factor at the end of the semester makes an unbalanced split expensive for everyone.
 
@@ -238,6 +248,6 @@ Both are ways to size stories before a sprint. Story points are relative: a 3 is
 
 **Where ideal days get awkward on this project.** Capacity turns out to be small once it is written in days. The plan's 25-point velocity is about a third above unassisted pace, so unassisted the team clears roughly 19 points a sprint — about 6–9 ideal days for the whole team, or about 1½–2 per person per two-week sprint. That is accurate for students carrying other courses, but next to a 10-working-day sprint it reads like under-commitment, and it invites people to plan by the calendar instead of by capacity. AI assistance makes it worse: an ideal day with a code generator and one without are different amounts of work, so the unit drifts from story to story depending on who estimates and what tool they picture using. Points avoid this — the size of the work stays fixed and the AI speed-up shows up in velocity, where Sprint 1 will measure it.
 
-**Recommendation:** keep story points. The backlog is already pointed, the anchor is written down, and the Oct 5 retrospective will give a real velocity to plan Sprints 2–5 against. Use the conversion table only as a translation when an instructor or stakeholder asks how long something takes, and never estimate the same backlog in both units — two sets of numbers that disagree will cost more time in planning than either one saves.
+**Recommendation:** keep story points. The backlog is already pointed, the anchor is written down, and the Oct 2 retrospective will give a real velocity to plan Sprints 2–5 against. Use the conversion table only as a translation when an instructor or stakeholder asks how long something takes, and never estimate the same backlog in both units — two sets of numbers that disagree will cost more time in planning than either one saves.
 
-**Estimating with planning poker.** Point new or changed stories as a team using planning poker with a Fibonacci deck (1, 2, 3, 5, 8, plus ? for "too unclear to size"). Each person picks a card privately, everyone reveals at once, and the highest and lowest voters explain their reasoning before a re-vote — that conversation is where hidden work and misunderstood acceptance criteria come out. Vote on the size of the work, not on how fast a code generator could write it. An 8 means split the story before it enters a sprint, and a ? means refine the acceptance criteria first. The team uses [pointingpoker.com](https://www.pointingpoker.com) to run sessions, so remote members can vote from a browser.
+**Estimating with planning poker.** Point new or changed stories as a team using planning poker with a Fibonacci deck (1, 2, 3, 5, 8, plus ? for "too unclear to size"). Each person picks a card privately, everyone reveals at once, and the highest and lowest voters explain their reasoning before a re-vote — that conversation is where hidden work and misunderstood acceptance criteria come out. Vote on the size of the work, not on how fast a code generator could write it. An 8 means split the story before it enters a sprint, and a ? means refine the acceptance criteria first. The team uses [pointingpoker.com](https://www.pointingpoker.com) or [planningpokeronline.com](https://planningpokeronline.com) to run sessions, so remote members can vote from a browser.
