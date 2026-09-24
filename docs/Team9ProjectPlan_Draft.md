@@ -215,23 +215,23 @@ Five risks shape the ordering above; each has its mitigation built into a sprint
 
 Tasks live in Jira, not in this plan — they change daily, and this document should stay stable enough to point at. This appendix is the decomposition guide: which stories are too large or too layered to start as one unit of work, and where they split. Every story at 5 points or more is broken down before it is pulled into a sprint; 3-point stories are broken down when they cross layers or carry two distinct behaviors; 1- and 2-point stories stay whole.
 
-| Story | Points | Why it splits | Suggested tasks |
-| --- | --- | --- | --- |
-| CLMS-18 | 8 | Largest story in the plan: a wide required field set, validation rules and a phoned-in intake flow | Order schema and migration; required-field validation (patient, physician, insurance); intake form UI; save and retrieve; test that each required field is rejected when blank |
-| CLMS-30 | 5 | File handling and parsing are separate risks; the parser can be built and tested before the file watcher exists | ORU file reader and watched folder; pipe/caret segment parser; malformed-message handling; parser tests against sample ORU files |
-| CLMS-31 | 5 | Matching, instrument attribution and the unmatched case are three distinct behaviors | Barcode-to-sample matching; instrument stamp on the result; unmatched-result queue and review; end-to-end test from file to matched result |
-| CLMS-29 | 5 | One log schema, but write hooks spread across collection, testing, inventory and point-of-sale flows | Append-only log schema; write hooks in each source flow; block edits and deletes; manager log view with filters |
-| CLMS-14 | 5 | Create, update, search and validation can each be demonstrated on their own | Patient schema and migration; create and update screens and endpoints; search by name, DOB or ID; field validation and duplicate check |
-| CLMS-9 | 3 | Crosses session storage, API and UI; the failure path is its own test surface | Session model and token; login endpoint; login screen; invalid-credential and session-expiry handling |
-| CLMS-10 | 3 | The permission matrix is a design decision; server enforcement and UI gating are separate builds | Permission matrix for the six user types; server-side enforcement; hide screens and actions by role; per-role access test |
-| CLMS-12 | 3 | Lockout logic and outbound email fail in unrelated ways | Failed-attempt counter and lock state; enforce lock at login; email to laboratory manager; test at 4, 5 and 6 attempts |
-| CLMS-20 | 3 | Result entry, reference-range evaluation and technician approval are distinct steps | Result schema (value, units, range, status); entry form; range check sets status; technician approval step |
-| CLMS-34 | 3 | Item selection, totals and the saved transaction can be built separately | Select test items from catalog; cart totals; save transaction; link transaction to test order |
-| CLMS-38 | 3 | Raising the order and receiving the shipment are two events days apart | Create purchase order (manager only); PO status tracking; receive shipment and update inventory; log both events |
-| CLMS-43 | 3 | Builds the report engine that CLMS-44 and CLMS-45 reuse, so engine and report are different work | Date-range query engine; financial totals and statistics; report display and export; shared interface for the inventory and operational reports |
-
+| ID | Title | Points | Why it splits | Suggested tasks |
+| --- | --- | --- | --- | --- |
+| CLMS-18 | Phoned-in order with required field set | 8 | Largest story in the plan: a wide required field set, validation rules and a phoned-in intake flow | Order schema and migration; required-field validation (patient, physician, insurance); intake form UI; save and retrieve; test that each required field is rejected when blank |
+| CLMS-30 | ORU file parsing | 5 | File handling and parsing are separate risks; the parser can be built and tested before the file watcher exists | ORU file reader and watched folder; pipe/caret segment parser; malformed-message handling; parser tests against sample ORU files |
+| CLMS-31 | Match results to samples by barcode | 5 | Matching, instrument attribution and the unmatched case are three distinct behaviors | Barcode-to-sample matching; instrument stamp on the result; unmatched-result queue and review; end-to-end test from file to matched result |
+| CLMS-29 | Unified append-only activity log | 5 | One log schema, but write hooks spread across collection, testing, inventory and point-of-sale flows | Append-only log schema; write hooks in each source flow; block edits and deletes; manager log view with filters |
+| CLMS-14 | Patient record create, update and search | 5 | Create, update, search and validation can each be demonstrated on their own | Patient schema and migration; create and update screens and endpoints; search by name, DOB or ID; field validation and duplicate check |
+| CLMS-9 | Login and authenticated session | 3 | Crosses session storage, API and UI; the failure path is its own test surface | Session model and token; login endpoint; login screen; invalid-credential and session-expiry handling |
+| CLMS-10 | Role-based screen and action permissions | 3 | The permission matrix is a design decision; server enforcement and UI gating are separate builds | Permission matrix for the six user types; server-side enforcement; hide screens and actions by role; per-role access test |
+| CLMS-12 | Account lockout after 5 failed logins | 3 | Lockout logic and outbound email fail in unrelated ways | Failed-attempt counter and lock state; enforce lock at login; email to laboratory manager; test at 4, 5 and 6 attempts |
+| CLMS-20 | Manual result entry | 3 | Result entry, reference-range evaluation and technician approval are distinct steps | Result schema (value, units, range, status); entry form; range check sets status; technician approval step |
+| CLMS-34 | Point-of-sale test purchase | 3 | Item selection, totals and the saved transaction can be built separately | Select test items from catalog; cart totals; save transaction; link transaction to test order |
+| CLMS-38 | Purchase order and distributor restock | 3 | Raising the order and receiving the shipment are two events days apart | Create purchase order (manager only); PO status tracking; receive shipment and update inventory; log both events |
+| CLMS-43 | Financial report | 3 | Builds the report engine that CLMS-44 and CLMS-45 reuse, so engine and report are different work | Date-range query engine; financial totals and statistics; report display and export; shared interface for the inventory and operational reports |
+| --- | --- | --- | --- | --- |
 Stories left whole: CLMS-1, 5, 6, 8, 11, 13, 21, 23, 27, 35, 36, 37, 41, 44, 45 and 47 are single-behavior, single-layer work at 1–2 points — splitting them adds tracking overhead without reducing risk. The remaining 3-point stories (CLMS-2, 3, 4, 7, 17, 19, 22, 24, 25, 26, 28, 33, 40 and 46) can be split at the team's discretion during sprint planning.
-
+| --- | --- | --- | --- | --- |
 ## Appendix B — Story points or ideal days
 
 Both are ways to size stories before a sprint. Story points are relative: a 3 is about three times a 1, and nobody claims to know how long a 1 takes until velocity shows it. Ideal days are absolute: one ideal day is the work one person finishes in a day with no meetings, no context switching and no waiting on anyone. This plan uses story points on the Fibonacci scale (1, 2, 3, 5, 8), pinned to a rough anchor of 1 point ≈ 2–3 hours of unassisted work.
